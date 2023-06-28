@@ -23,6 +23,9 @@ To run the source codes in conda environment run the following code.
 conda create --name <env> --file requirements_conda.txt
 ```
 
+#### H2O
+In order to utilize our *AdFlush* mojo model, the system must have Java installed among versions 8, 9, 10, 11, 12, or 13. 
+
 #### Prepare Dataset
 1. Setup the directory structure as it is the same as this GitHub repository.
     1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease. 
@@ -53,18 +56,21 @@ Output Example
 > Running...  
 > Inference time elapsed:  0.24999642372131348 for  166032  samples.  
 > Performace Metrics:  
->    Accuracy:  0.9788354052230895  
->    Precision:  0.9839751993460524  
->    Recall:  0.9626544746729437  
->    F1:  0.9731980779498131  
->    False Negative Rate: 0.03734552532705627  
->    False Positive Rate: 0.010415100391944586  
+>    Accuracy:  0.9788293822877517  
+>    Precision:  0.9790394479726429  
+>    Recall:  0.9676791453533113  
+>    F1:  0.973326149479803  
+>    ROC-AUC:  0.976957988057724  
+>    False Negative Rate: 0.0323208546466887  
+>    False Positive Rate: 0.01376316923786325  
 
 - We must note that the results of the source code may differ from the results in our paper. The ONNX convertion involves compatibility within multiple environments, nessecary for browser extension implementation. However in this way the limit of Opsets in conversion acts as an upperbound in model performance by degrading precise floating point computation. 
 
 Arguements
 
-> `--dataset`: the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.
+> `--dataset`: the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.  
+>  `--model`: the model extract type to use in evaluation. Available values are `mojo` and `onnx`.  
+
 
 ### Generate GAN mutated datasets
 Run the following source code within *AdFlush*'s directory to generate a new GAN mutated dataset. You can vary the parameters and also use the dataset to evaluate performance of *AdFlush*. 
@@ -105,3 +111,19 @@ npx webpack --config webpack.config.js
 
 3. Press the refresh button to reload *AdFlush* within your chrome extension and you are ready to run the modified *AdFlush*.  
     ![Modification](/assets/Modification.PNG)
+
+
+## Training GAN
+To train the GAN we implemented in robustness evaluation of *AdFlush*, we provide `generate_GAN.py` to train GAN upon desired hyperparameters. 
+
+Modify the hyperparameters in `source/generate_GAN.py` and run the code below to train GAN and build a mutated dataset. 
+
+```bash
+python3 source/generate_GAN.py --feature adflush
+```
+
+Arguements
+
+> `--feature`: the feature set to fit and train GAN upon. Available values are `adflush`, `adgraph`, and `webgraph`. 
+
+The output of the code above will generate a mutated dataset from the newly trained GAN as `GAN_custom_mutated_<featureset>.csv`. You can utilize this dataset to evaluate the robustness of *AdFlush*.

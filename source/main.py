@@ -5,7 +5,7 @@ import pandas as pd
 import time
 import argparse
 import sys
-import os
+import h2o
 
 def metrics(true, pred,is_mutated):
     print("Performace Metrics: ")
@@ -13,6 +13,7 @@ def metrics(true, pred,is_mutated):
     print("\tPrecision: ",precision_score(true, pred))
     print("\tRecall: ",recall_score(true, pred))
     print("\tF1: ", f1_score(true, pred))
+    print("\tROC-AUC:", roc_auc_score(true, pred))
     
     # ASR
     if is_mutated:
@@ -32,7 +33,27 @@ def metrics(true, pred,is_mutated):
     fpr = fp / (fp + tn)
     print('\tFalse Positive Rate:', fpr)
     
-def inference(input, label, is_mutated):
+def inference_mojo(input, label, is_mutated):
+    h2o.init()
+    path = '/model/AdFlush_mojo.zip'
+    h2o_model = h2o.import_mojo(path)
+    input_frame = h2o.H2OFrame(input)
+    print("Running...")
+    start_inf=time.time()
+    pred = h2o_model.predict(input_frame).as_data_frame().predict.to_list()
+    print("Inference time elapsed: ", time.time()-start_inf, "for ", len(label), " samples.")
+    h2o.shutdown()
+    metrics(label.astype(int), pred, is_mutated)
+    
+def inference_onnx(input, label, is_mutated):
+    # Check that the IR is well formed
+    model=onnx.load('model/AdFlush.onnx')
+    try:
+        onnx.checker.check_model(model)
+    except Exception as e:
+        print("Error in loading model: ",e)
+        return
+    
     # Create an ONNX runtime session
     print("Open ONNX session")
     ort_session = ort.InferenceSession('model/AdFlush.onnx')
@@ -46,7 +67,7 @@ def inference(input, label, is_mutated):
     print("Inference time elapsed: ", time.time()-start_inf, "for ", len(label), " samples.")
     metrics(label.astype(int), pred[0].astype(int), is_mutated)
     
-def prepare(dataset):
+def prepare(dataset, modeltype):
     dataframe=''
     is_mutated=False
     
@@ -64,17 +85,15 @@ def prepare(dataset):
         print("Loading GAN dataset...")
         dataframe=pd.read_csv("dataset/GAN_mutated_AdFlush.csv", index_col=0)
         is_mutated=True
+    elif dataset=='gan_custom':
+        print("Loading custom GAN dataset...")
+        dataframe=pd.read_csv("dataset/GAN_custom_mutated_AdFlush.csv", index_col=0)
+        is_mutated=True
     else:
         print("Unavailable dataset...")
         return
     
-    model=onnx.load('model/AdFlush.onnx')
-    # Check that the IR is well formed
-    try:
-        onnx.checker.check_model(model)
-    except Exception as e:
-        print("Error in loading model: ",e)
-        return
+
 
     input_features=['content_policy_type', 'fqdn_0', 'fqdn_1', 'fqdn_12', 'fqdn_14', 
                     'fqdn_17', 'fqdn_23', 'fqdn_24', 'fqdn_25', 'fqdn_26', 
@@ -85,14 +104,21 @@ def prepare(dataset):
     
     input = dataframe[input_features]
     label=dataframe['label']
-    inference(input,label,is_mutated)
+    if modeltype=='mojo':
+        inference_mojo(input,label,is_mutated)
+    elif modeltype=='onnx':
+        inference_onnx(input,label,is_mutated)
+    else:
+        print("Model type error.")
+        return
     
 def main(program, args):
     #arguements
     parser=argparse.ArgumentParser(description="Evaluate AdFlush")
-    parser.add_argument('--dataset',type=str, default='test',choices=['train','test','gan'], help='Dataset to evaluate AdFlush on.')
+    parser.add_argument('--dataset',type=str, default='test',choices=['train','test','gan','gan_custom'], help='Dataset to evaluate AdFlush on.')
+    parser.add_argument('--modeltype',type=str, default='mojo',choices=['mojo','onnx'], help='Model type to use AdFlush.')
     a=parser.parse_args(args)
-    prepare(a.dataset)
+    prepare(a.dataset, a.modeltype)
     
 if __name__=="__main__":
     main(sys.argv[0],sys.argv[1:])
