@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", async()=>{
   const ort=require('onnxruntime-web');
   let session;
   
-  session = await ort.InferenceSession.create('./h2o_RFECV_27_0628.onnx');
+  session = await ort.InferenceSession.create('./AdFlush.onnx');
   chrome.runtime.sendMessage({action:'madeModel', input:session.inputNames});
 
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse){

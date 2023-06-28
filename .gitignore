@@ -1,3 +1,6 @@
 __pycache__/
 extension/node_modules
 extension/dist.crx
+dataset/testset.csv
+dataset/trainset.csv
+source/main_test.ipynb
