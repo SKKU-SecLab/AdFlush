@@ -37,32 +37,21 @@ Run the following source code within *AdFlush*'s directory to evaluate *AdFlush*
 ```bash
 python3 source/main.py --dataset test
 ```
-> Output
-> 
-> Loading test dataset...
->
-> Open ONNX session
->
-> Running...
->
-> Inference time elapsed:  0.24999642372131348 for  166032  samples.
->
-> Performace Metrics:
->
->       Accuracy:  0.9788354052230895
->
->       Precision:  0.9839751993460524
->
->       Recall:  0.9626544746729437
->
->       F1:  0.9731980779498131
->
->       False Negative Rate: 0.03734552532705627
->
->       False Positive Rate: 0.010415100391944586
->
+Output Example
 
-> Arguements
+> Loading test dataset...
+> Open ONNX session
+> Running...
+> Inference time elapsed:  0.24999642372131348 for  166032  samples.
+>   Performace Metrics:
+>       Accuracy:  0.9788354052230895
+>       Precision:  0.9839751993460524
+>       Recall:  0.9626544746729437
+>       F1:  0.9731980779498131
+>       False Negative Rate: 0.03734552532705627
+>       False Positive Rate: 0.010415100391944586
+
+Arguements
 >
 > `--dataset`: the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.
 
