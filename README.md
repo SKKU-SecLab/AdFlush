@@ -127,3 +127,6 @@ Arguements
 > `--feature`: the feature set to fit and train GAN upon. Available values are `adflush`, `adgraph`, and `webgraph`. 
 
 The output of the code above will generate a mutated dataset from the newly trained GAN as `GAN_custom_mutated_<featureset>.csv`. You can utilize this dataset to evaluate the robustness of *AdFlush*.
+
+## Dataset
+We opensource our *AdFlush* dataset used within our study. Our dataset consists of top 10K web pages from Tranco list, crawled at the date April 4, 2023. We divided our dataset for training processes and evaluation by 8:2 ratio. We also provide the dataset obtained with our trained GAN and used in robustness evaluation. These are available in `dataset` directory. 
