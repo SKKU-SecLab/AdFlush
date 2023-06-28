@@ -2,35 +2,44 @@
 
 Document for submitted paper "AdFlush: A Lightweight and Accurate Web Tracking and Advertisement Detector" at NDSS 2024. 
 *AdFlush* is the first advertisement and web tracker blocker Chrome Extension based on Machine Learning prediction. With thorough feature engineering process considering state-of-the-art methodology, *AdFlush* takes advantage of its lightweight and powerful classification ability to detect and block advertisement and web trackers preserving user privacy in the same time. Please refer to our paper for details of the framework and evaluation results of *AdFlush*.
+
+The demo of exploring real-life web sites and detecting, blocking advertisements and trackers using *AdFlush* is available <a href="https://www.youtube.com/watch?v=PNvW-XfJMck">here</a>.
 <hr>
 
 ## Within Python or Conda
-### Requirements
+
+### Prerequisites
 This study has been run and tested in *Python==3.10.11* and *Conda==23.5.0*. 
+
 #### Python
 To run the source codes in python environment run the following code.
 ```bash
 pip install -r requirements.txt
 ```
+
 #### Conda
 To run the source codes in conda environment run the following code.
 ```bash
 conda create --name <env> --file requirements_conda.txt
 ```
+
 #### Prepare Dataset
-- Setup the directory structure as it is the same as this GitHub repository.
-    - We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease. 
-    - Move to the directory you want to import *AdFlush*. 
+1. Setup the directory structure as it is the same as this GitHub repository.
+    1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease. 
+
+    2. Move to the directory you want to import *AdFlush*. 
     ```bash
     cd path/to/working/directory
     ```
-    - Within the directory, run the following source codes. 
+
+    3. Within the directory, run the following source codes. 
     ```bash
     git clone https://github.com/fedebotu/clone-anonymous-github.git
     python3 clone-anonymous-github/src/download.py --url https://anonymous.4open.science/r/AdFlush-93D1 --save_dir AdFlush
     cd AdFlush
     ```
-- Download the files(*testset.csv*, *trainset.csv*) from https://zenodo.org/record/8091819 and replace the *\*.placeholder* files respectively in */dataset* folder. 
+
+2. Download the files(*testset.csv*, *trainset.csv*) from https://zenodo.org/record/8091819 and replace the *\*.placeholder* files respectively in */dataset* folder. 
 
 ### How to evaluate *AdFlush*
 Run the following source code within *AdFlush*'s directory to evaluate *AdFlush* within python based environment. We provide accuracy, precision, recall, F1-score, attack success rate (for GAN mutated dataset), false positive rate, false negative rate metrics for the given datasets. 
@@ -39,23 +48,60 @@ python3 source/main.py --dataset test
 ```
 Output Example
 
-> Loading test dataset...
-> Open ONNX session
-> Running...
-> Inference time elapsed:  0.24999642372131348 for  166032  samples.
->   Performace Metrics:
->       Accuracy:  0.9788354052230895
->       Precision:  0.9839751993460524
->       Recall:  0.9626544746729437
->       F1:  0.9731980779498131
->       False Negative Rate: 0.03734552532705627
->       False Positive Rate: 0.010415100391944586
+> Loading test dataset...  
+> Open ONNX session  
+> Running...  
+> Inference time elapsed:  0.24999642372131348 for  166032  samples.  
+> Performace Metrics:  
+>    Accuracy:  0.9788354052230895  
+>    Precision:  0.9839751993460524  
+>    Recall:  0.9626544746729437  
+>    F1:  0.9731980779498131  
+>    False Negative Rate: 0.03734552532705627  
+>    False Positive Rate: 0.010415100391944586  
+
+- We must note that the results of the source code may differ from the results in our paper. The ONNX convertion involves compatibility within multiple environments, nessecary for browser extension implementation. However in this way the limit of Opsets in conversion acts as an upperbound in model performance by degrading precise floating point computation. 
 
 Arguements
->
+
 > `--dataset`: the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.
+
+### Generate GAN mutated datasets
+Run the following source code within *AdFlush*'s directory to generate a new GAN mutated dataset. You can vary the parameters and also use the dataset to evaluate performance of *AdFlush*. 
 
 <hr>
 
 ## Within Chrome Extension
-### Requirements
+The following browser extension is developed in `npm==9.5.1`.
+
+### Setting Up *AdFlush*
+
+1. Open a Chrome web browser.  
+
+2. Click on the options and navigate to `Extensions` > `Manage Extensions`.
+    ![Prerequisites 1](/assets/browser_extension_pre1.png)
+
+3. Click on `Manage Extensions` Within the page, click on `Load unpacked`. If you don't see this button, make sure you have enabled `Developer mode` on the right side of the page
+    ![Prerequisites 2](/assets/browser_extension_pre2.png)
+
+4. Navigate to `path/to/working/directory/AdFlush/extension/dist` and select the folder. 
+    ![Prerequisites 3](/assets/browser_extension_pre3.png)
+
+5. Open your extensions and pin *AdFlush* to utilize full functionalities.
+    ![Prerequisites 4](/assets/browser_extension_pre4.png)
+
+### Applying Modification to *AdFlush*
+If you decide to apply some modifications within our chrome extension or want to customize behavior, you must use `webpack` to repack the extension reflecting your modifications.
+
+1. Open a command line prompt and navigate to `path/to/working/directory/AdFlush/extension`. Run the source code below to install the packages required for *AdFlush* chrome extension.
+```bash
+npm install
+```
+
+2. When you are done applying modifications to *AdFlush*, un the source code below to pack the source codes with appropriate npm packages. 
+```bash
+npx webpack --config webpack.config.js
+```
+
+3. Press the refresh button to reload *AdFlush* within your chrome extension and you are ready to run the modified *AdFlush*.  
+    ![Modification](/assets/Modification.PNG)
