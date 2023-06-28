@@ -2,13 +2,17 @@ import onnx
 import onnxruntime as ort
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 import pandas as pd
-import numpy as np
+import time
+import argparse
+import sys
+import os
 
 def metrics(true, pred,is_mutated):
-    print("Accuracy: ",accuracy_score(true, pred))
-    print("Precision: ",precision_score(true, pred))
-    print("Recall: ",recall_score(true, pred))
-    print("F1: ", f1_score(true, pred))
+    print("Performace Metrics: ")
+    print("\tAccuracy: ",accuracy_score(true, pred))
+    print("\tPrecision: ",precision_score(true, pred))
+    print("\tRecall: ",recall_score(true, pred))
+    print("\tF1: ", f1_score(true, pred))
     
     # ASR
     if is_mutated:
@@ -17,52 +21,54 @@ def metrics(true, pred,is_mutated):
         # Number of successful attacks (misclassifications)
         successful_attacks = sum(true != pred)
         asr = successful_attacks / total_attacks
-        print("Attack Success Rate: ",asr)
+        print("\tAttack Success Rate: ",asr)
 
     tn, fp, fn, tp = confusion_matrix(true, pred).ravel()        
     # Calculate FNR
     fnr = fn / (tp + fn)
-    print('False Negative Rate:', fnr)
+    print('\tFalse Negative Rate:', fnr)
 
     # Calculate FPR
     fpr = fp / (fp + tn)
-    print('False Positive Rate:', fpr)
+    print('\tFalse Positive Rate:', fpr)
     
 def inference(input, label, is_mutated):
     # Create an ONNX runtime session
     print("Open ONNX session")
-    ort_session = ort.InferenceSession('../model/AdFlush.onnx')
+    ort_session = ort.InferenceSession('model/AdFlush.onnx')
     input_data = input.values.astype('float32')
     input_name = ort_session.get_inputs()[0].name
 
     # Run the inference session to get the prediction results
     print("Running...")
+    start_inf=time.time()
     pred = ort_session.run(None, {input_name: input_data})
+    print("Inference time elapsed: ", time.time()-start_inf, "for ", len(label), " samples.")
     metrics(label.astype(int), pred[0].astype(int), is_mutated)
     
-def main():
-    #arguements
-    dataset='train'
+def prepare(dataset):
+    dataframe=''
+    is_mutated=False
     
     if dataset=='train':
         print("Loading train dataset...")
-        dataframe=pd.read_csv("../dataset/trainset.csv", index_col=0)
+        dataframe=pd.read_csv("dataset/trainset.csv", index_col=0)
         is_mutated=False
         
     elif dataset=='test':
         print("Loading test dataset...")
-        dataframe=pd.read_csv("../dataset/testset.csv", index_col=0)
+        dataframe=pd.read_csv("dataset/testset.csv", index_col=0)
         is_mutated=False
         
     elif dataset=='gan':
         print("Loading GAN dataset...")
-        dataframe=pd.read_csv("../GAN_mutated_AdFlush.csv", index_col=0)
+        dataframe=pd.read_csv("dataset/GAN_mutated_AdFlush.csv", index_col=0)
         is_mutated=True
     else:
         print("Unavailable dataset...")
         return
     
-    model=onnx.load('../model/AdFlush.onnx')
+    model=onnx.load('model/AdFlush.onnx')
     # Check that the IR is well formed
     try:
         onnx.checker.check_model(model)
@@ -81,5 +87,12 @@ def main():
     label=dataframe['label']
     inference(input,label,is_mutated)
     
+def main(program, args):
+    #arguements
+    parser=argparse.ArgumentParser(description="Evaluate AdFlush")
+    parser.add_argument('--dataset',type=str, default='test',choices=['train','test','gan'], help='Dataset to evaluate AdFlush on.')
+    a=parser.parse_args(args)
+    prepare(a.dataset)
+    
 if __name__=="__main__":
-    main()
+    main(sys.argv[0],sys.argv[1:])
