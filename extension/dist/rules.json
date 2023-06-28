@@ -1,0 +1,124 @@
+[
+  {
+    "id":1,
+    "priority":2,
+    "action":{
+      "type": "allow"
+    },
+    "condition":{
+      "regexFilter": "^https?://.*[\\?,&](_rq_delayed=true)|(de_ad_before=daylight).*",
+      "resourceTypes":[
+        "csp_report",
+        "font",
+        "image",
+        "main_frame",
+        "media",
+        "object",
+        "ping",
+        "script",
+        "stylesheet",
+        "sub_frame",
+        "webbundle",
+        "webtransport",
+        "xmlhttprequest",
+        "other"
+      ]
+    }
+  },
+  {
+    "id":2,
+    "priority":1,
+    "action":{
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "https://app.requestly.io/delay/300/https:/"
+      }
+    },
+    "condition":{
+      "regexFilter": "^https?:\/\/",
+      "resourceTypes":[
+        "csp_report",
+        "font",
+        "image",
+        "main_frame",
+        "media",
+        "object",
+        "ping",
+        "script",
+        "stylesheet",
+        "sub_frame",
+        "webbundle",
+        "webtransport",
+        "xmlhttprequest",
+        "other"
+      ],
+      "excludedRequestDomains":[
+        "app.requestly.io"
+      ],
+      "excludedInitiatorDomains":[
+        "app.requestly.io",
+        "about:client"
+      ],
+      "excludedRegexFilter": "(.*de_ad_before=daylight.*)|(.*_rq_delayed=true.*)"
+      }
+    },
+    {
+      "id": 3,
+      "priority": 4,
+      "action": {
+        "type": "modifyHeaders",
+        "responseHeaders":[
+          {
+            "header":"Access-Control-Allow-Origin",
+            "operation":"set",
+            "value":"*"
+          }
+        ]
+      },
+      "condition": { 
+        "urlFilter": "*", 
+        "resourceTypes": [
+          "font",
+          "script",
+          "xmlhttprequest"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "priority": 3,
+      "action": {
+        "type": "modifyHeaders",
+        "responseHeaders":[
+          {
+            "header":"User-Agent",
+            "operation":"set",
+            "value":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+          },
+          {
+            "header":"Cookie",
+            "operation":"remove"
+          }
+        ]
+      },
+      "condition": { 
+        "urlFilter": "app.requestly.io", 
+        "resourceTypes": [
+          "csp_report",
+          "font",
+          "image",
+          "main_frame",
+          "media",
+          "object",
+          "ping",
+          "script",
+          "stylesheet",
+          "sub_frame",
+          "webbundle",
+          "webtransport",
+          "xmlhttprequest",
+          "other"
+        ]
+      }
+    }
+]

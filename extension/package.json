@@ -1,0 +1,22 @@
+{
+  "name": "tempex",
+  "version": "1.0.0",
+  "main": "popup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "babel-loader": "^9.1.2",
+    "copy-webpack-plugin": "^11.0.0",
+    "onnxruntime-web": "1.15",
+    "tldjs": "^2.3.1",
+    "url": "^0.11.0",
+    "webpack": "^5.84.0",
+    "webpack-cli": "^5.1.1"
+  },
+  "description": ""
+}
