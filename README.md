@@ -85,17 +85,17 @@ The following browser extension is developed in `npm==9.5.1`.
 1. Open a Chrome web browser.  
 
 2. Click on the options and navigate to `Extensions` > `Manage Extensions`.
-    ![Prerequisites 1](/assets/browser_extension_pre1.png)
-    <img src="./assets/browser_extension_pre1.png" alt="prerequisites 1">
+    ![Prerequisites 1](./assets/browser_extension_pre1.png)
+    <img src="https://anonymous.4open.science/r/AdFlush-93D1/assets/browser_extension_pre1.png" alt="prerequisites 1">
 
 3. Click on `Manage Extensions` Within the page, click on `Load unpacked`. If you don't see this button, make sure you have enabled `Developer mode` on the right side of the page
-    ![Prerequisites 2](/assets/browser_extension_pre2.png)
+    ![Prerequisites 2](./assets/browser_extension_pre2.png)
 
 4. Navigate to `path/to/working/directory/AdFlush/extension/dist` and select the folder. 
-    ![Prerequisites 3](/assets/browser_extension_pre3.png)
+    ![Prerequisites 3](./assets/browser_extension_pre3.png)
 
 5. Open your extensions and pin *AdFlush* to utilize full functionalities.
-    ![Prerequisites 4](/assets/browser_extension_pre4.png)
+    ![Prerequisites 4](./assets/browser_extension_pre4.png)
 
 ### Applying Modification to *AdFlush*
 If you decide to apply some modifications within our chrome extension or want to customize behavior, you must use `webpack` to repack the extension reflecting your modifications.
