@@ -36,6 +36,7 @@ pip install -r requirements.txt
 To run the source codes in conda environment run the following code.
 ```bash
 conda create --name adflush --file environment.yml
+conda activate adflush
 ```
 
 #### H2O AutoML
