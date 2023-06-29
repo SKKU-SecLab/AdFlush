@@ -86,6 +86,7 @@ The following browser extension is developed in `npm==9.5.1`.
 
 2. Click on the options and navigate to `Extensions` > `Manage Extensions`.
     ![Prerequisites 1](/assets/browser_extension_pre1.png)
+    <img src="./assets/browser_extension_pre1.png" alt="prerequisites 1">
 
 3. Click on `Manage Extensions` Within the page, click on `Load unpacked`. If you don't see this button, make sure you have enabled `Developer mode` on the right side of the page
     ![Prerequisites 2](/assets/browser_extension_pre2.png)
