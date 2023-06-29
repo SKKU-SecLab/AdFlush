@@ -35,7 +35,7 @@ def metrics(true, pred,is_mutated):
     
 def inference_mojo(input, label, is_mutated):
     h2o.init()
-    path = '/model/AdFlush_mojo.zip'
+    path = 'model/AdFlush_mojo.zip'
     h2o_model = h2o.import_mojo(path)
     input_frame = h2o.H2OFrame(input)
     print("Running...")

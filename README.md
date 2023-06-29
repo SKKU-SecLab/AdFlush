@@ -150,5 +150,6 @@ Columns
 > - `(index)` : Index of corresponding sample. Values are unique across both `trainset.csv` and `testset.csv`.  
 > - `visit_id` : Visit ID obtained upon crawling via <a href="https://github.com/openwpm/OpenWPM">OpenWPM</a>.  
 > - `<features used in WebGraph, AdGraph, WTAGraph>` : Aggregated columns of features used in the three studies are available in our dataset. The full list of features in order as in our dataset is available in `dataset/features.txt`.  
-> - `req_url_[0-199]` : Character embeddings of *AdFlush*. The values are obtainable by mapping each character in the URLs of request and source to our character dictionary (`reqwordvec.json` and `fqdnwordvec.json`) trained upon our trainset, and then average the values.  
+> - `req_url_[0-199]` : Character embeddings of request URL implemented in *AdFlush*. The values are obtainable by mapping each character in the URLs of request to our character dictionary `reqwordvec.json` trained upon our trainset, and then average the values.  
+> - `fqdn_[0-29]` : Character embeddings of source URL implemented in *AdFlush*. The values are obtainable by mapping each character in the URLs of request to our character dictionary `fqdnwordvec.json` trained upon our trainset, and then average the values.  
 > - `label` : Truth value of the corresponding sample. 1 indicates advertisement or web tracker sample, and 0 indicates as benign sample.  
