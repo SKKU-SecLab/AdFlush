@@ -9,7 +9,7 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 ## Within Python or Conda
 
 ### Prerequisites
-This study has been run and tested in *Python==3.10.11*, *Conda==23.5.0*, and *Java==1.8.0_361.* 
+This study has been run and tested in *Python==3.10.11*, *Conda==22.9.0*, and *openjdk==11.0.17*, within Linux 4.15.0-197-generic (bionic 18.04). 
 #### Clone Repository
 Setup the directory structure as it is the same as this GitHub repository.  
 1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease.  
@@ -29,7 +29,7 @@ cd AdFlush/AdFlush-93D1
 #### Python
 To run the source codes in python environment run the following code.
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 #### Conda
