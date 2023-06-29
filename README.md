@@ -43,7 +43,7 @@ conda activate adflush
 In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. You can download Java as the same version as tested from <a href="https://www.oracle.com/kr/java/technologies/javase/javase8u211-later-archive-downloads.html">here</a>. 
 
 #### Prepare Dataset
-Download the files(*testset.csv*, *trainset.csv*) from https://zenodo.org/record/8091819 and replace the *\*.placeholder* files respectively in */dataset* folder. 
+Download the files(*testset.csv*, *trainset.csv*) from <a href="https://zenodo.org/record/8091819">here</a> and replace the *\*.placeholder* files respectively in */dataset* folder. 
 
 ### How to evaluate *AdFlush*
 Run the following source code within *AdFlush*'s directory to evaluate *AdFlush* within python based environment. We provide accuracy, precision, recall, F1-score, attack success rate (for GAN mutated dataset), false positive rate, false negative rate metrics for the given datasets. 
