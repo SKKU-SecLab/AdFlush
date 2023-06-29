@@ -68,8 +68,8 @@ Output Example
 
 Arguements
 
-> `--dataset`: the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.  
->  `--model`: the model extract type to use in evaluation. Available values are `mojo` and `onnx`.  
+> - `--dataset` : the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.  
+> - `--model` : the model extract type to use in evaluation. Available values are `mojo` and `onnx`.  
 
 
 ### Generate GAN mutated datasets
@@ -84,20 +84,20 @@ The following browser extension is developed in `npm==9.5.1`.
 
 1. Open a Chrome web browser.  
 
-2. Click on the options and navigate to `Extensions` > `Manage Extensions`.
+2. Click on the options and navigate to `Extensions` > `Manage Extensions`.  
     ![Prerequisites 1](./assets/browser_extension_pre1.png)
 
-3. Click on `Manage Extensions` Within the page, click on `Load unpacked`. If you don't see this button, make sure you have enabled `Developer mode` on the right side of the page
+3. Click on `Manage Extensions` Within the page, click on `Load unpacked`. If you don't see this button, make sure you have enabled `Developer mode` on the right side of the page.  
     ![Prerequisites 2](./assets/browser_extension_pre2.png)
 
-4. Navigate to `path/to/working/directory/AdFlush/extension/dist` and select the folder. 
+4. Navigate to `path/to/working/directory/AdFlush/extension/dist` and select the folder.  
     ![Prerequisites 3](./assets/browser_extension_pre3.png)
 
-5. Open your extensions and pin *AdFlush* to utilize full functionalities.
+5. Open your extensions and pin *AdFlush* to utilize full functionalities.  
     ![Prerequisites 4](./assets/browser_extension_pre4.png)
 
 ### Applying Modification to *AdFlush*
-If you decide to apply some modifications within our chrome extension or want to customize behavior, you must use `webpack` to repack the extension reflecting your modifications.
+If you decide to apply some modifications within our chrome extension or want to customize behavior, you must use <a href="https://webpack.js.org/">webpack</a> to repack the extension reflecting your modifications.
 
 1. Open a command line prompt and navigate to `path/to/working/directory/AdFlush/extension`. Run the source code below to install the packages required for *AdFlush* chrome extension.
 ```bash
@@ -124,9 +124,31 @@ python3 source/generate_GAN.py --feature adflush
 
 Arguements
 
-> `--feature`: the feature set to fit and train GAN upon. Available values are `adflush`, `adgraph`, and `webgraph`. 
+> - `--feature` : the feature set to fit and train GAN upon. Available values are `adflush`, `adgraph`, and `webgraph`. 
 
 The output of the code above will generate a mutated dataset from the newly trained GAN as `GAN_custom_mutated_<featureset>.csv`. You can utilize this dataset to evaluate the robustness of *AdFlush*.
 
 ## Dataset
 We opensource our *AdFlush* dataset used within our study. Our dataset consists of top 10K web pages from Tranco list, crawled at the date April 4, 2023. We divided our dataset for training processes and evaluation by 8:2 ratio. We also provide the dataset obtained with our trained GAN and used in robustness evaluation. These are available in `dataset` directory. 
+
+Our dataset looks like as below. Note that the indices derive from splitting a full dataset into train/test thus are unique between both train and test.  
+| (index) | visit_id     | name                                              | content_policy_type | url_length | is_subdomain | is_valid_qs | ... | label |
+|---------|--------------|---------------------------------------------------|---------------------|------------|--------------|-------------|-----|-------|
+| 0       | 1.700576e+11 | https://rbl.efnetrbl.org/                         | 0.036026            | 20         | 1            | 1           |     | 0     |
+| 1       | 1.700576e+11 | https://rbl.efnetrbl.org/                         | 0.036026            | 25         | 1            | 1           | ... | 0     |
+| 2       | 1.700576e+11 | https://www.google.com/recaptcha/api.js           | 0.474811            | 39         | 0            | 1           | ... | 0     |
+| 3       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
+| 4       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
+| 5       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
+| 6       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
+| 8       | 1.700576e+11 | https://www.gstatic.com/recaptcha/api2/logo_48... | 0.384715            | 50         | 0            | 1           | ... | 0     |
+| ...     | ...          | ...                                               | ...                 | ...        | ...          | ...         | ... | ...   |
+| 830,159 | 9.004904e+15 | https://www.ziffdavis.com/s/zd/fonts/Helvetica... | 0.109323            | 64         | 1            | 1           | ... | 0     |  
+
+Columns
+
+> - `(index)` : Index of corresponding sample. Values are unique across both `trainset.csv` and `testset.csv`.  
+> - `visit_id` : Visit ID obtained upon crawling via <a href="https://github.com/openwpm/OpenWPM">OpenWPM</a>.  
+> - `<features used in WebGraph, AdGraph, WTAGraph>` : Aggregated columns of features used in the three studies are available in our dataset. The full list of features in order as in our dataset is available in `dataset/features.txt`.  
+> - `req_url_[0-199]` : Character embeddings of *AdFlush*. The values are obtainable by mapping each character in the URLs of request and source to our character dictionary (`reqwordvec.json` and `fqdnwordvec.json`) trained upon our trainset, and then average the values.  
+> - `label` : Truth value of the corresponding sample. 1 indicates advertisement or web tracker sample, and 0 indicates as benign sample.  
