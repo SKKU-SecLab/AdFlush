@@ -10,6 +10,21 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 
 ### Prerequisites
 This study has been run and tested in *Python==3.10.11*, *Conda==23.5.0*, and *Java==1.8.0_361.* 
+#### Clone Repository
+Setup the directory structure as it is the same as this GitHub repository.  
+1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease.  
+
+2. Move to the directory you want to import *AdFlush*.  
+```bash
+cd path/to/working/directory
+```
+
+3. Within the directory, run the following source codes.  
+```bash
+git clone https://github.com/fedebotu/clone-anonymous-github.git
+python3 clone-anonymous-github/src/download.py --url https://anonymous.4open.science/r/AdFlush-93D1 --save_dir AdFlush
+cd AdFlush
+```
 
 #### Python
 To run the source codes in python environment run the following code.
@@ -23,26 +38,11 @@ To run the source codes in conda environment run the following code.
 conda create --name <env> --file requirements_conda.txt
 ```
 
-#### H2O
+#### H2O AutoML
 In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. 
 
 #### Prepare Dataset
-1. Setup the directory structure as it is the same as this GitHub repository.
-    1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease. 
-
-    2. Move to the directory you want to import *AdFlush*. 
-    ```bash
-    cd path/to/working/directory
-    ```
-
-    3. Within the directory, run the following source codes. 
-    ```bash
-    git clone https://github.com/fedebotu/clone-anonymous-github.git
-    python3 clone-anonymous-github/src/download.py --url https://anonymous.4open.science/r/AdFlush-93D1 --save_dir AdFlush
-    cd AdFlush
-    ```
-
-2. Download the files(*testset.csv*, *trainset.csv*) from https://zenodo.org/record/8091819 and replace the *\*.placeholder* files respectively in */dataset* folder. 
+Download the files(*testset.csv*, *trainset.csv*) from https://zenodo.org/record/8091819 and replace the *\*.placeholder* files respectively in */dataset* folder. 
 
 ### How to evaluate *AdFlush*
 Run the following source code within *AdFlush*'s directory to evaluate *AdFlush* within python based environment. We provide accuracy, precision, recall, F1-score, attack success rate (for GAN mutated dataset), false positive rate, false negative rate metrics for the given datasets. 
