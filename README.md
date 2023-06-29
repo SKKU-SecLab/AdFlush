@@ -29,6 +29,7 @@ cd AdFlush/AdFlush-93D1
 #### Python
 To run the source codes in python environment run the following code.
 ```bash
+sudo apt install -y apparmor
 pip3 install -r requirements.txt
 ```
 
