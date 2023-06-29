@@ -35,7 +35,7 @@ pip install -r requirements.txt
 #### Conda
 To run the source codes in conda environment run the following code.
 ```bash
-conda create --file environment.yml
+conda env create -f environment.yml
 conda activate adflush
 ```
 
