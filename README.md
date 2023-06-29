@@ -9,7 +9,7 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 ## Within Python or Conda
 
 ### Prerequisites
-This study has been run and tested in *Python==3.10.11* and *Conda==23.5.0*. 
+This study has been run and tested in *Python==3.10.11*, *Conda==23.5.0*, and *Java==1.8.0_361.* 
 
 #### Python
 To run the source codes in python environment run the following code.
@@ -24,7 +24,7 @@ conda create --name <env> --file requirements_conda.txt
 ```
 
 #### H2O
-In order to utilize our *AdFlush* mojo model, the system must have Java installed among versions 8, 9, 10, 11, 12, or 13. 
+In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. 
 
 #### Prepare Dataset
 1. Setup the directory structure as it is the same as this GitHub repository.
