@@ -23,7 +23,7 @@ cd path/to/working/directory
 ```bash
 git clone https://github.com/fedebotu/clone-anonymous-github.git
 python3 clone-anonymous-github/src/download.py --url https://anonymous.4open.science/r/AdFlush-93D1 --save_dir AdFlush
-cd AdFlush
+cd AdFlush/AdFlush-93D1
 ```
 
 #### Python
@@ -39,7 +39,7 @@ conda create --name <env> --file requirements_conda.txt
 ```
 
 #### H2O AutoML
-In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. 
+In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. You can download Java as the same version as tested from <a href="https://www.oracle.com/kr/java/technologies/javase/javase8u211-later-archive-downloads.html">here</a>. 
 
 #### Prepare Dataset
 Download the files(*testset.csv*, *trainset.csv*) from https://zenodo.org/record/8091819 and replace the *\*.placeholder* files respectively in */dataset* folder. 
