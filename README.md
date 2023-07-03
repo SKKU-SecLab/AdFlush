@@ -27,9 +27,11 @@ cd AdFlush/AdFlush-93D1
 ```
 
 #### Python
-To run the source codes in python environment run the following code.
+To run the source codes in python environment run the following code. 
 ```bash
-sudo apt install -y apparmor
+pip3 install virtualenv
+virtualenv adflush --python=python3.10.11
+source adflush/bin/activate
 pip3 install -r requirements.txt
 ```
 
@@ -49,7 +51,7 @@ Download the files(*testset.csv*, *trainset.csv*) from <a href="https://zenodo.o
 ### How to evaluate *AdFlush*
 Run the following source code within *AdFlush*'s directory to evaluate *AdFlush* within python based environment. We provide accuracy, precision, recall, F1-score, attack success rate (for GAN mutated dataset), false positive rate, false negative rate metrics for the given datasets. 
 ```bash
-python3 source/main.py --dataset test
+python3 source/main.py --dataset test --modeltype onnx
 ```
 Output Example
 
