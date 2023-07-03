@@ -30,7 +30,7 @@ cd AdFlush/AdFlush-93D1
 To run the source codes in python environment run the following code. 
 ```bash
 pip3 install virtualenv
-virtualenv adflush --python=python3.10.11
+virtualenv adflush --python=python3.10
 source adflush/bin/activate
 pip3 install -r requirements.txt
 ```
