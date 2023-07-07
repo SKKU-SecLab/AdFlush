@@ -48,6 +48,8 @@ In order to utilize our *AdFlush* mojo model, the system must have Java installe
 #### Prepare Dataset
 Download the files(*testset.csv*, *trainset.csv*) from <a href="https://zenodo.org/record/8091819">here</a> and replace the *\*.placeholder* files respectively in */dataset* folder. 
 
+<hr>
+
 ### How to evaluate *AdFlush*
 Run the following source code within *AdFlush*'s directory to evaluate *AdFlush* within python based environment. We provide accuracy, precision, recall, F1-score, attack success rate (for GAN mutated dataset), false positive rate, false negative rate metrics for the given datasets. 
 ```bash
@@ -75,9 +77,22 @@ Arguements
 > - `--dataset` : the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.  
 > - `--model` : the model extract type to use in evaluation. Available values are `mojo` and `onnx`.  
 
+<hr>
 
 ### Generate GAN mutated datasets
-Run the following source code within *AdFlush*'s directory to generate a new GAN mutated dataset. You can vary the parameters and also use the dataset to evaluate performance of *AdFlush*. 
+Run the following source code within *AdFlush*'s directory to train a new GAN as the robustness evaluation of *AdFlush* and create a custom mutated dataset. You can vary the parameters and also use the dataset to evaluate performance of *AdFlush*. We provide `generate_GAN.py` to train GAN upon desired hyperparameters. 
+
+Modify the hyperparameters in `source/generate_GAN.py` and run the code below to train GAN and build a mutated dataset. 
+
+```bash
+python3 source/generate_GAN.py --feature adflush
+```
+
+Arguements
+
+> - `--feature` : the feature set to fit and train GAN upon. Available values are `adflush`, `adgraph`, and `webgraph`. 
+
+The output of the code above will generate a mutated dataset from the newly trained GAN as `GAN_custom_mutated_<featureset>.csv`. You can utilize this dataset to evaluate the robustness of *AdFlush*.
 
 <hr>
 
@@ -100,6 +115,8 @@ The following browser extension is developed in `npm==9.5.1`.
 5. Open your extensions and pin *AdFlush* to utilize full functionalities.  
     ![Prerequisites 4](./assets/browser_extension_pre4.png)
 
+<hr>
+
 ### Applying Modification to *AdFlush*
 If you decide to apply some modifications within our chrome extension or want to customize behavior, you must use <a href="https://webpack.js.org/">webpack</a> to repack the extension reflecting your modifications.
 
@@ -116,21 +133,7 @@ npx webpack --config webpack.config.js
 3. Press the refresh button to reload *AdFlush* within your chrome extension and you are ready to run the modified *AdFlush*.  
     ![Modification](./assets/Modification.PNG)
 
-
-## Training GAN
-To train the GAN we implemented in robustness evaluation of *AdFlush*, we provide `generate_GAN.py` to train GAN upon desired hyperparameters. 
-
-Modify the hyperparameters in `source/generate_GAN.py` and run the code below to train GAN and build a mutated dataset. 
-
-```bash
-python3 source/generate_GAN.py --feature adflush
-```
-
-Arguements
-
-> - `--feature` : the feature set to fit and train GAN upon. Available values are `adflush`, `adgraph`, and `webgraph`. 
-
-The output of the code above will generate a mutated dataset from the newly trained GAN as `GAN_custom_mutated_<featureset>.csv`. You can utilize this dataset to evaluate the robustness of *AdFlush*.
+<hr>
 
 ## Dataset
 We opensource our *AdFlush* dataset used within our study. Our dataset consists of top 10K web pages from Tranco list, crawled at the date April 4, 2023. We divided our dataset for training processes and evaluation by 8:2 ratio. We also provide the dataset obtained with our trained GAN and used in robustness evaluation. These are available in `dataset` directory. 
