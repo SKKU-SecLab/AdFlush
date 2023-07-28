@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "AdFlush",
+  "name": "De-Adlock",
   "key":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqwuv1AoiR/mytfnjXfQmz36fL3A00IdTudsJasE2DswI4SqebfZ8NP9xzL/TgiRzOTulcR4AquQbt3ULHuyP4fSfQDztckCA78p5hzcLdgF0uECte6m5pkmb0B9pEZxY/5tJRJ7Ze7JimopXmuWN9jmi0ixHAN1RTGF6HD62aBgYPGhBxqx4pMAJwBfrRLBjrDjtICZbDfoyBy/FYu8QelqpfZ/uVA3w2nZxquSiPim9/y4EMd5k23gcZ2qePwFS5LS0KCdAlPcp5XQelvOrhzYGXAjYO73JCD+qeoVtaNNO7c+QD8hg+l+Nqrnhh+vFiFf73BYUqjXi9wt+1dZQjQIDAQAB",
   "version": "1.0",
   "declarative_net_request":{
-    "rule_resources":[{
+    "rule_resources":[
+      {
       "id": "ruleset_1",
       "enabled": true,
       "path":"rules.json"
-    }]
+      }
+    ]
   },
   "host_permissions": [ "<all_urls>" ],
   "permissions": [

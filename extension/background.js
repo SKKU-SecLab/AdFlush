@@ -1,11 +1,15 @@
 const { getDomain } = require('tldjs');
+const {getSubdomain} =require('tldjs');
 
-let dynamic_rule_num=4;
+let dynamic_rule_num=500;
+let allow_rule_num=1;
 let blocked_url_numbers=0;
 let messageQueue = [];
 let time_dict={};
 let ext_time=[];
 let inf_time=[];
+let block_history=[];
+let toggle=true;
 
 async function processNextMessage() {
   if (messageQueue.length > 0) {
@@ -50,10 +54,15 @@ async function processNextMessage() {
       }
       if(Number(pred[0])==1){
         blocked_url_numbers+=1;
-        dynamic_rule_num=dynamic_rule_num%4996;
+        dynamic_rule_num=dynamic_rule_num%5000;
         if(dynamic_rule_num==0){
-          dynamic_rule_num=4;
+          dynamic_rule_num=500;
         }
+        let full_domain=getSubdomain(url)+"."+getDomain(url);
+        if(!block_history.includes(full_domain)){
+          block_history.unshift(full_domain);
+        }
+
         chrome.declarativeNetRequest.updateDynamicRules(
           {
             addRules:[{
@@ -108,7 +117,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
     let url=details['url'];
     let dom=details['initiator'];
     let singleslashreg=/https?:\/[^\/]/;
-    if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")){
+    if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")&&toggle){
       let localurl=url.substring(35);
       if(localurl[0]=='/'){
         localurl=localurl.substring(1);
@@ -417,6 +426,12 @@ chrome.runtime.onInstalled.addListener(async()=>{
       sendResponse({"block":blocked_url_numbers,"ext":ext_time,"inf":inf_time});
       ext_time=[];
       inf_time=[];
+    } 
+    if(request.action=="saveHistory"){
+      if(block_history.length>15){
+        block_history=block_history.slice(0,15);
+      }
+      chrome.storage.session.set({"history":block_history});
     }
   });
 
@@ -432,12 +447,250 @@ chrome.runtime.onInstalled.addListener(async()=>{
       },
       function(){
         console.log("Flushed dynamic rules");
-        dynamic_rule_num=5;
+        dynamic_rule_num=500;
       }
     );
   });
 
- 
+  chrome.storage.sync.get({"toggle":true},function(res){
+    toggle=res.toggle;
+    console.log("Current toggle mode: "+toggle);
+    if(toggle){
+      chrome.declarativeNetRequest.updateEnabledRulesets(
+        {
+          enableRulesetIds:["ruleset_1"]
+        }
+      );
+      console.log("Use ruleset 1 (block)");
+    }
+    else{
+      chrome.declarativeNetRequest.updateEnabledRulesets(
+        {
+          disableRulesetIds:["ruleset_1"]  
+        }
+      );
+      console.log("Use no ruleset");
+    }
+  });
+
+  //allow rules
+  chrome.storage.sync.get({"toggle":true},function(res){
+    if(res.toggle==false){
+      toggle=false;
+    }
+  });
+
+  chrome.storage.sync.get({'allowlist':[]}, function(res){
+    if(res.allowlist.length==0){
+      console.log("Allowlist Init");
+      let default_list=[];
+      default_list.push("comic.naver.com");
+      default_list.push("www.youtube.com");
+      default_list.push("googlevideo.com");
+      default_list.push("www.yahoo.com");
+      
+      chrome.storage.sync.set({'allowlist':default_list});
+    }
+    else{
+      console.log("Allow list:");
+      console.log(res.allowlist);
+
+      if(toggle){
+        allow_rule_num=1;
+        for(let i=0;i<res.allowlist.length;i++){
+          chrome.declarativeNetRequest.updateDynamicRules(
+            {
+              addRules:[{
+                  "id": allow_rule_num,
+                  "priority": 9,
+                  "action": {
+                    "type": "allow"
+                  },
+                  "condition":{
+                    "urlFilter":String("||"+res.allowlist[i]),
+                    "resourceTypes":[
+                      "csp_report",
+                      "font",
+                      "image",
+                      "main_frame",
+                      "media",
+                      "object",
+                      "ping",
+                      "script",
+                      "stylesheet",
+                      "sub_frame",
+                      "webbundle",
+                      "webtransport",
+                      "xmlhttprequest",
+                      "other"
+                    ]
+                  }
+                }
+              ],
+              removeRuleIds:[allow_rule_num]
+            }
+          );          
+  
+          allow_rule_num=allow_rule_num+1;
+          console.log(res.allowlist[i]+" allowed");
+        }
+  
+      }
+    }
+  });
+
+
+  chrome.storage.onChanged.addListener((changes, namespace)=>{
+    for(let [key, {oldValue, newValue}] of Object.entries(changes)){
+      if(namespace=="sync"){
+        if(key=="allowlist"){
+          let prev=[];
+          for(let i=0;i<oldValue.length;i++){
+            prev.push(i);
+          }
+          chrome.declarativeNetRequest.updateDynamicRules({removeRuleIds:prev});
+  
+          let allowlist=newValue;
+          allow_rule_num=1;
+          for(let i=0;i<allowlist.length;i++){
+            chrome.declarativeNetRequest.updateDynamicRules(
+              {
+                addRules:[{
+                    "id": allow_rule_num,
+                    "priority": 9,
+                    "action": {
+                      "type": "allow"
+                    },
+                    "condition":{
+                      "urlFilter":String("||"+allowlist[i]),
+                      "resourceTypes":[
+                        "csp_report",
+                        "font",
+                        "image",
+                        "main_frame",
+                        "media",
+                        "object",
+                        "ping",
+                        "script",
+                        "stylesheet",
+                        "sub_frame",
+                        "webbundle",
+                        "webtransport",
+                        "xmlhttprequest",
+                        "other"
+                      ]
+                    }
+                  }
+                ],
+                removeRuleIds:[allow_rule_num]
+              }
+            );          
+    
+            allow_rule_num=allow_rule_num+1;
+  
+            console.log("Add allow rule for "+allowlist[i]);
+          }
+        }
+        else if(key=="toggle"){
+          toggle=newValue;
+          if(toggle){
+            console.log("Turn On");
+            chrome.declarativeNetRequest.updateEnabledRulesets(
+              {
+                enableRulesetIds:["ruleset_1"]
+              }
+            );
+
+            chrome.storage.sync.get({'allowlist':[]}, function(res){
+              allow_rule_num=1;
+              for(let i=0;i<res.allowlist.length;i++){
+                chrome.declarativeNetRequest.updateDynamicRules(
+                  {
+                    addRules:[{
+                        "id": allow_rule_num,
+                        "priority": 9,
+                        "action": {
+                          "type": "allow"
+                        },
+                        "condition":{
+                          "urlFilter":String("||"+res.allowlist[i]),
+                          "resourceTypes":[
+                            "csp_report",
+                            "font",
+                            "image",
+                            "main_frame",
+                            "media",
+                            "object",
+                            "ping",
+                            "script",
+                            "stylesheet",
+                            "sub_frame",
+                            "webbundle",
+                            "webtransport",
+                            "xmlhttprequest",
+                            "other"
+                          ]
+                        }
+                      }
+                    ],
+                    removeRuleIds:[allow_rule_num]
+                  }
+                );          
+        
+                allow_rule_num=allow_rule_num+1;
+                console.log(res.allowlist[i]+" allowed");
+              }
+            });
+          }
+
+          else{
+            console.log("Turn Off");
+            chrome.declarativeNetRequest.updateEnabledRulesets(
+              {
+                disableRulesetIds:["ruleset_1"]  
+              }
+            );
+            chrome.declarativeNetRequest.getDynamicRules({},function(rules){
+
+              let dyn_arr=[];
+              for(let i=0;i<rules.length;i++){
+                dyn_arr.push(rules[i].id);
+              }
+
+              chrome.declarativeNetRequest.updateDynamicRules(
+                {
+                  removeRuleIds:dyn_arr
+                },
+                function(){
+                  console.log("Flushed dynamic rules");
+                  dynamic_rule_num=500;
+                }
+              );
+            });
+          }
+        }
+      }
+    }
+  });
+
+  chrome.declarativeNetRequest.onRuleMatchedDebug.addListener(function(match){
+    let url=match.request.url;
+    let ruleid=match.rule.ruleId;
+    let ruleset=match.rule.rulesetId;
+    let memo;
+    if(ruleid<500&&ruleset=="_dynamic"){
+      console.log("Allow", ruleid, ruleset, url);
+    }
+    else if(ruleid>=500&&ruleset=="_dynamic"){
+      console.log("Block", ruleid, ruleset, url);
+    }
+    else{
+      memo="Static";
+    }
+    
+
+
+  });
 }); 
 
 let creating; 

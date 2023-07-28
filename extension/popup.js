@@ -3,6 +3,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const extdiv = document.getElementById("extract");
   const infdiv = document.getElementById("inference");
   
+  const toggle_b=document.getElementById("toggleswitch");
+  const toggle=document.getElementById("toggle");
+
+  const onoffdes=document.getElementById("onoffdes");
+
+  chrome.storage.sync.get(["toggle"],function(res){
+    if(res.toggle==true){
+      toggle.checked=true;
+      onoffdes.innerText="De-Adlock ON";
+    }
+    else{
+      toggle.checked=false;
+      onoffdes.innerText="De-Adlock OFF";
+    }
+  });
+
+  toggle_b.addEventListener("click", function(){
+    toggle_click()
+  });
+
   chrome.runtime.sendMessage({ action: "showBlocks" }, (response) => {
     if(response){
       let blocked=response['block'];
@@ -24,6 +44,18 @@ document.addEventListener("DOMContentLoaded", () => {
         infdiv.innerHTML="Avg. inference time: "+parseFloat(inf_time).toFixed(3)+"s";
       }
     }
+  });
+
+  chrome.runtime.sendMessage({action:"saveHistory"});
+
+  const setting_b=document.getElementById("setting");
+  setting_b.addEventListener("click",function(){
+    document.location.href="customlist.html";
+  });
+
+  const history_b=document.getElementById("history");
+  history_b.addEventListener("click",function(){
+    document.location.href="history.html";
   });
 });
 
@@ -55,3 +87,19 @@ document.body.addEventListener("click",function(){
     }
   });
 });
+
+function toggle_click(){
+  const toggle=document.getElementById("toggle");
+  const onoffdes=document.getElementById("onoffdes");
+
+  if(!toggle.checked){
+    chrome.storage.sync.set({"toggle":true});
+    onoffdes.innerText="De-Adlock ON";
+    console.log("On");
+  }
+  else{
+    chrome.storage.sync.set({"toggle":false});
+    onoffdes.innerText="De-Adlock OFF";
+    console.log("Off");
+  }
+}
