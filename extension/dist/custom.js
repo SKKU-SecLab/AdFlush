@@ -9,49 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
       document.location.href="history.html";
     });
 
-
-    const whitediv=document.getElementById("whitediv");
-
     chrome.storage.sync.get({'allowlist':[]},function(res){
         let allowlist=res.allowlist;
         console.log(allowlist);
 
-        for(let i=0;i<allowlist.length;i++){
-            const currentURL=allowlist[i];
-
-            const whitelistelem=document.createElement("div");
-            whitelistelem.id="whitelistelem";
-            whitelistelem.setAttribute("style","background-color: rgb(88, 99, 119); width:100%; margin-bottom:3px; display:flex; flex-direction:row; align-items:center; justify-content:space-between;");
-            
-            const urlelem=document.createElement("div");
-            urlelem.id="urlelem";
-            urlelem.setAttribute("style", "padding-left:10px; font-size:small;");
-            urlelem.innerHTML=currentURL;
-
-            const delbutton=document.createElement("div");
-            delbutton.setAttribute("style", "height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
-            
-            const delbuttonimg=document.createElement("img");
-            delbuttonimg.setAttribute("style","margin:5px; height:17px;");
-            delbuttonimg.setAttribute("src", "images/del_icon.png");
-
-            whitediv.appendChild(whitelistelem);
-            whitelistelem.appendChild(urlelem);
-            whitelistelem.appendChild(delbutton);
-            delbutton.appendChild(delbuttonimg);
-
-            delbuttonimg.addEventListener("click",function(){
-                whitelistelem.remove();
-
-                for(let j=0;j<allowlist.length;j++){
-                    if(allowlist[j]==currentURL){
-                        allowlist.splice(j,1);
-                    }
-                }
-                chrome.storage.sync.set({"allowlist":allowlist});
-            });
-
-        }
+        build_list(allowlist);
     });
     
 
@@ -67,62 +29,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 chrome.storage.sync.get({'allowlist':[]},function(res){
                     let allowlist=res.allowlist;
                     console.log(allowlist);
-    
-    
 
-    
                     if(!allowlist.includes(url)){
                         allowlist.push(url);
                         chrome.storage.sync.set({"allowlist":allowlist},function(){
                             custominput.remove();
-                            plusimg.setAttribute("src","images/plus_icon.png");
-                            plusimg.setAttribute("style", "margin:5px; height:17px");
-                            plusdiv.setAttribute("style", "margin-bottom:15px; background-color: rgb(88, 99, 119); width:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
-                
-                            const whitelistelem=document.createElement("div");
-                            whitelistelem.id="whitelistelem";
-                            whitelistelem.setAttribute("style","background-color: rgb(88, 99, 119); width:100%; margin-bottom:3px; display:flex; flex-direction:row; align-items:center; justify-content:space-between;");
-                            
-                            const urlelem=document.createElement("div");
-                            urlelem.id="urlelem";
-                            urlelem.setAttribute("style", "padding-left:10px; font-size:small;");
-                            urlelem.innerHTML=url;
-                
-                            const delbutton=document.createElement("div");
-                            delbutton.setAttribute("style", "height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
-                            
-                            const delbuttonimg=document.createElement("img");
-                            delbuttonimg.setAttribute("style","margin:5px; height:17px;");
-                            delbuttonimg.setAttribute("src", "images/del_icon.png");
-                
-                            whitediv.appendChild(whitelistelem);
-                            whitelistelem.appendChild(urlelem);
-                            whitelistelem.appendChild(delbutton);
-                            delbutton.appendChild(delbuttonimg);
-                
-                            
-                            plusdiv.setAttribute("tag","plus");
-            
-                            delbuttonimg.addEventListener("click",function(){
-                                whitelistelem.remove();
-                
-                                for(let j=0;j<allowlist.length;j++){
-                                    if(allowlist[j]==url){
-                                        allowlist.splice(j,1);
-                                    }
-                                }
-                                chrome.storage.sync.set({"allowlist":allowlist});
-                            });
-        
+
+                            build_list(allowlist);        
                         });
-    
-        
                     }
-    
                 });
-
-
-                
             }
         }
     });
@@ -133,8 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
             plusimg.setAttribute("src","images/check_icon.png");
             plusimg.setAttribute("style", "margin: 5px; height: 13px");
             plusdiv.setAttribute("style", "margin-bottom:15px; background-color: rgb(88, 99, 119); width:100%; display:flex; flex-direction:row; align-items:center; justify-content:space-between;")
-
-            const form=document.createElement("form");
 
             const custominput=document.createElement("input");
             custominput.setAttribute("type","url");
@@ -156,3 +70,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }); 
 
 });
+
+function build_list(allowlist){
+    const whitediv=document.getElementById("whitediv");
+    const plusdiv=document.getElementById("plusdiv");
+    const plusimg=document.getElementById("plusimg");
+    
+    for(let url of allowlist){
+        plusimg.setAttribute("src","images/plus_icon.png");
+        plusimg.setAttribute("style", "margin:5px; height:17px");
+        plusdiv.setAttribute("style", "margin-bottom:15px; background-color: rgb(88, 99, 119); width:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
+    
+        const whitelistelem=document.createElement("div");
+        whitelistelem.id="whitelistelem";
+        whitelistelem.setAttribute("style","background-color: rgb(88, 99, 119); width:100%; margin-bottom:3px; display:flex; flex-direction:row; align-items:center; justify-content:space-between;");
+        
+        const urlelem=document.createElement("div");
+        urlelem.id="urlelem";
+        urlelem.setAttribute("style", "padding-left:10px; font-size:small;");
+        urlelem.innerHTML=url;
+    
+        const buttondiv=document.createElement("div");
+        buttondiv.setAttribute("style","height:100%; width:50px; display:flex; flex-direction:row; align-items:center; justify-content:center;")
+
+        const reportbutton=document.createElement("div");
+        reportbutton.setAttribute("style", "height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center; ")
+        
+        const reportbuttonimg=document.createElement("img");
+        reportbuttonimg.setAttribute("style","margin:5px 3px; height:17px; filter: invert(100%);");
+        reportbuttonimg.setAttribute("src","images/report_icon.png");
+    
+        const delbutton=document.createElement("div");
+        delbutton.setAttribute("style", "height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
+        
+        const delbuttonimg=document.createElement("img");
+        delbuttonimg.setAttribute("style","margin:5px; height:17px;");
+        delbuttonimg.setAttribute("src", "images/del_icon.png");
+    
+        whitediv.appendChild(whitelistelem);
+        whitelistelem.appendChild(urlelem);
+        whitelistelem.appendChild(buttondiv);
+        buttondiv.appendChild(reportbutton);
+        buttondiv.appendChild(delbutton); 
+        delbutton.appendChild(delbuttonimg);
+        reportbutton.appendChild(reportbuttonimg);
+    
+        
+        plusdiv.setAttribute("tag","plus");
+    
+        delbuttonimg.addEventListener("click",function(){
+            whitelistelem.remove();
+    
+            for(let j=0;j<allowlist.length;j++){
+                if(allowlist[j]==url){
+                    allowlist.splice(j,1);
+                }
+            }
+            chrome.storage.sync.set({"allowlist":allowlist});
+        });
+    
+    }
+}

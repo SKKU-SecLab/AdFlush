@@ -4,3 +4,4 @@ extension/dist.crx
 dataset/testset.csv
 dataset/trainset.csv
 source/main_test.ipynb
+extension/dist.pem

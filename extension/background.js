@@ -15,22 +15,12 @@ async function processNextMessage() {
   if (messageQueue.length > 0) {
     const message = messageQueue[0];
     let payload=message['payload'];
-    let whole_url=message['url'];
-    let singleslashreg=/https?:\/[^\/]/;
-    let url=whole_url.substring(35);
-    if(url[0]=='/'){
-      url=url.substring(1);
-    }
-    if(url.match(singleslashreg)){
-      url=url.slice(0,6)+'/'+url.slice(6);
-    }
+    let url=message['url'];
 
     let pred;
-    let prob;
     await chrome.runtime.sendMessage({action: 'inference', input:payload},async function(response) {
       try{
         pred=response['data'];
-        prob=response['prob'];
 
         let times=time_dict[url];
         if(times&&times.length==2){
@@ -38,19 +28,21 @@ async function processNextMessage() {
             let now=Date.now();
             let e_time=times[1]-times[0];
             let i_time=now-times[1];
-            if(e_time==NaN){
+            if(isNaN(e_time)){
               e_time=0;
             }
-            if(i_time==NaN){
+            if(isNaN(i_time)){
               i_time=0;
             }
             ext_time.push(e_time);
             inf_time.push(i_time);
             delete time_dict[url];  
           }catch(e){
+            console.log(e);
           }
         }
       }catch(e){
+        console.log(e);
       }
       if(Number(pred[0])==1){
         blocked_url_numbers+=1;
@@ -62,40 +54,7 @@ async function processNextMessage() {
         if(!block_history.includes(full_domain)){
           block_history.unshift(full_domain);
         }
-
-        chrome.declarativeNetRequest.updateDynamicRules(
-          {
-            addRules:[{
-                "id": dynamic_rule_num,
-                "priority": 5,
-                "action": {
-                  "type": "block"
-                },
-                "condition":{
-                  "urlFilter":url,
-                  "resourceTypes":[
-                    "csp_report",
-                    "font",
-                    "image",
-                    "main_frame",
-                    "media",
-                    "object",
-                    "ping",
-                    "script",
-                    "stylesheet",
-                    "sub_frame",
-                    "webbundle",
-                    "webtransport",
-                    "xmlhttprequest",
-                    "other"
-                  ]
-                }
-              }
-            ],
-            removeRuleIds:[dynamic_rule_num]
-          }
-        );
-        
+        addDynamicRule("block",dynamic_rule_num, url);        
         dynamic_rule_num+=1;
         console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
       }
@@ -115,8 +74,7 @@ function addToQueue(url, payload) {
 chrome.webRequest.onBeforeSendHeaders.addListener(
   async function(details){
     let url=details['url'];
-    let dom=details['initiator'];
-    let singleslashreg=/https?:\/[^\/]/;
+    let singleslashreg=/https?:\/[^/]/;
     if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")&&toggle){
       let localurl=url.substring(35);
       if(localurl[0]=='/'){
@@ -129,7 +87,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       temparray.push(Date.now());
       time_dict[localurl]=temparray;
 
-      let features=await featureExtract(details);
+      let features=await featureExtract(localurl, details);
 
       let dataA=[];
       try{
@@ -162,27 +120,20 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         dataA.push(features['reqEmbedding'][91]);
 
         time_dict[localurl].push(Date.now());
-        addToQueue(url, dataA);  
+        addToQueue(localurl, dataA);  
       }catch(e){
+        console.log(e);
       }
     }
   },  { urls: ["<all_urls>"] },
   ['requestHeaders']
 );
 
-function featureExtract(requestHeader){
-    let url=requestHeader['url'];
+function featureExtract(url, requestHeader){
     let method=requestHeader['method'];
     let content_header=requestHeader['requestHeaders'];
-    let singleslashreg=/https?:\/[^\/]/;
     let returnFeatures={};
-    url=url.substring(35);
-    if(url[0]=='/'){
-      url=url.substring(1);
-    }
-    if(url.match(singleslashreg)){
-      url=url.slice(0,6)+'/'+url.slice(6);
-    }
+
     let src_dom=requestHeader['initiator'];
     let urlsplit=url.split('/');
     let domain=""
@@ -191,7 +142,8 @@ function featureExtract(requestHeader){
     }else{
       domain=urlsplit[1];
     }
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
+      (async()=>{
         try {
           const [fqdnVector, reqVector] = await Promise.all([
             new Promise((innerResolve) => {
@@ -229,7 +181,7 @@ function featureExtract(requestHeader){
             const avg = (await embedding).map((val) => val / url2list.length);
             returnFeatures['fqdnEmbedding'] = avg;  
           }catch(e){
-
+            console.log(e);
           }
           //request embedding
           const req_length = 200;
@@ -250,15 +202,13 @@ function featureExtract(requestHeader){
           let keyword_char = [".", "/", "&", "=", ";", "-", "_", "/", "*", "^", "?", ";", "|", ","];
           //keyword_char_present
           let keyword_char_present=0;
-          let keyword_raw_present=0;
-          for(let j=0;j<keyword_raw.length;j++){
-            let matches=[...url.matchAll(new RegExp(keyword_raw[j],"ig"))];
+          for(let keyword of keyword_raw){
+            let matches=[...url.matchAll(new RegExp(keyword,"ig"))];
         
             if (matches.length>0){
-              keyword_raw_present=1;
-              for(let i=0;i<matches.length;i++){
-                if(matches[i].index-1>=0){
-                  let pre=url[matches[i].index-1];
+              for(let match of matches){
+                if(match.index-1>=0){
+                  let pre=url[match.index-1];
                   if(keyword_char.includes(pre)){
                     keyword_char_present=1;
                     break;
@@ -317,8 +267,8 @@ function featureExtract(requestHeader){
             let match_count=0
             let str_match_count=0;
             if(script_blocks){
-              for(let i=0;i<script_blocks.length;i++){
-                let script=script_blocks[i][0];
+              for(let script_block of script_blocks){
+                let script=script_block[0];
                 let ms=[...script.matchAll(requestreg)];
                 match_count+=ms.length;
                 let ms2=[...script.matchAll(storage_reg)];
@@ -332,6 +282,8 @@ function featureExtract(requestHeader){
         } catch (error) {
           reject(error);
         }
+
+      })();
     });
 }
 
@@ -343,8 +295,8 @@ function getRAWREQ(url, meth, header) {
         requrl=requrl+'?de_ad_before=daylight';
     }
     let send_header={};
-    for(let i=0;i<header.length;i++){
-      send_header[header[i].name]=header[i].value;
+    for(let header_elem of header){
+      send_header[header_elem.name]=header_elem.value;
     }
     let my_request;
     if(meth=='HEAD'||meth=="GET"||meth=="POST"){
@@ -362,7 +314,7 @@ function getRAWREQ(url, meth, header) {
       }); 
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       fetch(my_request)
         .then(response => {
           let res_text=""
@@ -374,6 +326,7 @@ function getRAWREQ(url, meth, header) {
               res_text=response.text();
             }
           }catch(e){
+            console.log(response.statusText);
           }
           return res_text;
         })
@@ -382,7 +335,6 @@ function getRAWREQ(url, meth, header) {
         })
         .catch(()=>{
         });
-
     });  
 }
 
@@ -435,23 +387,9 @@ chrome.runtime.onInstalled.addListener(async()=>{
     }
   });
 
-  chrome.declarativeNetRequest.getDynamicRules({},function(rules){
-    let dyn_arr=[];
-    for(let i=0;i<rules.length;i++){
-      dyn_arr.push(rules[i].id);
-    }
+  flushDynamicRules();
 
-    chrome.declarativeNetRequest.updateDynamicRules(
-      {
-        removeRuleIds:dyn_arr
-      },
-      function(){
-        console.log("Flushed dynamic rules");
-        dynamic_rule_num=500;
-      }
-    );
-  });
-
+  //init toggle
   chrome.storage.sync.get({"toggle":true},function(res){
     toggle=res.toggle;
     console.log("Current toggle mode: "+toggle);
@@ -473,13 +411,7 @@ chrome.runtime.onInstalled.addListener(async()=>{
     }
   });
 
-  //allow rules
-  chrome.storage.sync.get({"toggle":true},function(res){
-    if(res.toggle==false){
-      toggle=false;
-    }
-  });
-
+  //init allowlist
   chrome.storage.sync.get({'allowlist':[]}, function(res){
     if(res.allowlist.length==0){
       console.log("Allowlist Init");
@@ -496,50 +428,12 @@ chrome.runtime.onInstalled.addListener(async()=>{
       console.log(res.allowlist);
 
       if(toggle){
-        allow_rule_num=1;
-        for(let i=0;i<res.allowlist.length;i++){
-          chrome.declarativeNetRequest.updateDynamicRules(
-            {
-              addRules:[{
-                  "id": allow_rule_num,
-                  "priority": 9,
-                  "action": {
-                    "type": "allow"
-                  },
-                  "condition":{
-                    "urlFilter":String("||"+res.allowlist[i]),
-                    "resourceTypes":[
-                      "csp_report",
-                      "font",
-                      "image",
-                      "main_frame",
-                      "media",
-                      "object",
-                      "ping",
-                      "script",
-                      "stylesheet",
-                      "sub_frame",
-                      "webbundle",
-                      "webtransport",
-                      "xmlhttprequest",
-                      "other"
-                    ]
-                  }
-                }
-              ],
-              removeRuleIds:[allow_rule_num]
-            }
-          );          
-  
-          allow_rule_num=allow_rule_num+1;
-          console.log(res.allowlist[i]+" allowed");
-        }
-  
+        setupAllowlist(res.allowlist);
       }
     }
   });
 
-
+  //add listener for toggle & allowlist
   chrome.storage.onChanged.addListener((changes, namespace)=>{
     for(let [key, {oldValue, newValue}] of Object.entries(changes)){
       if(namespace=="sync"){
@@ -551,45 +445,7 @@ chrome.runtime.onInstalled.addListener(async()=>{
           chrome.declarativeNetRequest.updateDynamicRules({removeRuleIds:prev});
   
           let allowlist=newValue;
-          allow_rule_num=1;
-          for(let i=0;i<allowlist.length;i++){
-            chrome.declarativeNetRequest.updateDynamicRules(
-              {
-                addRules:[{
-                    "id": allow_rule_num,
-                    "priority": 9,
-                    "action": {
-                      "type": "allow"
-                    },
-                    "condition":{
-                      "urlFilter":String("||"+allowlist[i]),
-                      "resourceTypes":[
-                        "csp_report",
-                        "font",
-                        "image",
-                        "main_frame",
-                        "media",
-                        "object",
-                        "ping",
-                        "script",
-                        "stylesheet",
-                        "sub_frame",
-                        "webbundle",
-                        "webtransport",
-                        "xmlhttprequest",
-                        "other"
-                      ]
-                    }
-                  }
-                ],
-                removeRuleIds:[allow_rule_num]
-              }
-            );          
-    
-            allow_rule_num=allow_rule_num+1;
-  
-            console.log("Add allow rule for "+allowlist[i]);
-          }
+          setupAllowlist(allowlist);
         }
         else if(key=="toggle"){
           toggle=newValue;
@@ -602,44 +458,7 @@ chrome.runtime.onInstalled.addListener(async()=>{
             );
 
             chrome.storage.sync.get({'allowlist':[]}, function(res){
-              allow_rule_num=1;
-              for(let i=0;i<res.allowlist.length;i++){
-                chrome.declarativeNetRequest.updateDynamicRules(
-                  {
-                    addRules:[{
-                        "id": allow_rule_num,
-                        "priority": 9,
-                        "action": {
-                          "type": "allow"
-                        },
-                        "condition":{
-                          "urlFilter":String("||"+res.allowlist[i]),
-                          "resourceTypes":[
-                            "csp_report",
-                            "font",
-                            "image",
-                            "main_frame",
-                            "media",
-                            "object",
-                            "ping",
-                            "script",
-                            "stylesheet",
-                            "sub_frame",
-                            "webbundle",
-                            "webtransport",
-                            "xmlhttprequest",
-                            "other"
-                          ]
-                        }
-                      }
-                    ],
-                    removeRuleIds:[allow_rule_num]
-                  }
-                );          
-        
-                allow_rule_num=allow_rule_num+1;
-                console.log(res.allowlist[i]+" allowed");
-              }
+              setupAllowlist(res.allowlist);
             });
           }
 
@@ -650,53 +469,89 @@ chrome.runtime.onInstalled.addListener(async()=>{
                 disableRulesetIds:["ruleset_1"]  
               }
             );
-            chrome.declarativeNetRequest.getDynamicRules({},function(rules){
-
-              let dyn_arr=[];
-              for(let i=0;i<rules.length;i++){
-                dyn_arr.push(rules[i].id);
-              }
-
-              chrome.declarativeNetRequest.updateDynamicRules(
-                {
-                  removeRuleIds:dyn_arr
-                },
-                function(){
-                  console.log("Flushed dynamic rules");
-                  dynamic_rule_num=500;
-                }
-              );
-            });
+            
+            flushDynamicRules();
           }
         }
       }
     }
   });
-
-  chrome.declarativeNetRequest.onRuleMatchedDebug.addListener(function(match){
-    let url=match.request.url;
-    let ruleid=match.rule.ruleId;
-    let ruleset=match.rule.rulesetId;
-    let memo;
-    if(ruleid<500&&ruleset=="_dynamic"){
-      console.log("Allow", ruleid, ruleset, url);
-    }
-    else if(ruleid>=500&&ruleset=="_dynamic"){
-      console.log("Block", ruleid, ruleset, url);
-    }
-    else{
-      memo="Static";
-    }
-    
-
-
-  });
 }); 
+
+function setupAllowlist(a_list){
+  allow_rule_num=1;
+  for(let rule of a_list){
+    addDynamicRule("allow",allow_rule_num, String("||"+rule));
+    allow_rule_num=allow_rule_num+1;
+    console.log(rule+" allowed");
+  }
+}
+
+function addDynamicRule(option, ruleID, urlFilter){
+  let priority=5;
+  if(option=="allow"){
+    priority=9;
+  }
+
+  chrome.declarativeNetRequest.updateDynamicRules(
+    {
+      addRules:[{
+          "id": ruleID,
+          "priority": priority,
+          "action": {
+            "type": "allow"
+          },
+          "condition":{
+            "urlFilter":urlFilter,
+            "resourceTypes":[
+              "csp_report",
+              "font",
+              "image",
+              "main_frame",
+              "media",
+              "object",
+              "ping",
+              "script",
+              "stylesheet",
+              "sub_frame",
+              "webbundle",
+              "webtransport",
+              "xmlhttprequest",
+              "other"
+            ]
+          }
+        }
+      ],
+      removeRuleIds:[ruleID]
+    }
+  );
+}
+
+function flushDynamicRules(){
+  chrome.declarativeNetRequest.getDynamicRules({},function(rules){
+
+    let dyn_arr=[];
+    for(let rule of rules){
+      dyn_arr.push(rule.id);
+    }
+
+    chrome.declarativeNetRequest.updateDynamicRules(
+      {
+        removeRuleIds:dyn_arr
+      },
+      function(){
+        console.log("Flushed dynamic rules");
+        dynamic_rule_num=500;
+      }
+    );
+      
+  });
+}
 
 let creating; 
 async function setupOffscreenDocument(path) {
   const offscreenUrl = chrome.runtime.getURL(path);
-  const matchedClients = await clients.matchAll();
+  const matchedClients = await self.clients.matchAll();
   for (const client of matchedClients) {
     if (client.url === offscreenUrl) {
       return;
