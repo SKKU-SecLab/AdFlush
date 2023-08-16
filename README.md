@@ -12,7 +12,7 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 This study has been run and tested in *Python==3.10.11*, *Conda==22.9.0*, and *openjdk==11.0.17*, within Linux 4.15.0-197-generic (bionic 18.04). 
 #### Clone Repository
 Setup the directory structure as it is the same as this GitHub repository.  
-1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease.  
+<!--1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease.  
 
 2. Move to the directory you want to import *AdFlush*.  
 ```bash
@@ -24,7 +24,18 @@ cd path/to/working/directory
 git clone https://github.com/fedebotu/clone-anonymous-github.git
 python3 clone-anonymous-github/src/download.py --url https://anonymous.4open.science/r/AdFlush-93D1 --save_dir AdFlush
 cd AdFlush/AdFlush-93D1
+``` -->
+1. Move to the directory you want to import *AdFlush*.  
+```bash
+cd path/to/working/directory
 ```
+
+2. Within the directory, run the following source codes.  
+```bash
+git clone https://github.com/SKKU-SecLab/AdFlush.git
+cd AdFlush
+```
+
 
 #### Python
 To run the source codes in python environment run the following code. 
