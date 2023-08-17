@@ -40,9 +40,21 @@ function drop(event){
 
     const data=event.dataTransfer;
     const file=data.files[0];
-    if(String(file.name).endsWith(".txt")){
+    console.log(file);
+    const message=document.getElementById("message");
+
+    if(String(file.name).endsWith(".txt")&&String(file.type)=="text/plain"){
         const reader=new FileReader();
         reader.onload=(e)=>{
+
+            const upload_b=document.getElementById("uploadbutton");
+            const upload_t=document.getElementById("upload");
+
+            upload_b.setAttribute("style","width: 30%; height:25px; margin-top:15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 5px; background-color: rgba(240, 248, 255, 0.276);");
+            upload_t.setAttribute("style","font-size:14px; color: rgba(240, 248, 255, 0.4)");
+
+            upload_b.removeEventListener("click",upload);
+
             if(e.isTrusted){
                 const fileContext=String(e.target.result);
                 const domain_regex=/^@*\|*(((?!-)[A-Za-z0–9-]{1,63}(?<!-)\.)+[A-Za-z]{2,6})/gm;
@@ -51,12 +63,66 @@ function drop(event){
 
                 const addlist=[];
                 for(let match of matches){
-                    addlist.push(match[1]);
+                    if(!addlist.includes(match[1])){
+                        addlist.push(match[1]);
+                    }
                 }
-                console.log(addlist);
+                const len=addlist.length;
+                const arraystr=addlist.toString();
+                const eid=chrome.runtime.id;
+
+                if(len>0){             
+                    message.innerText=String(file.name+"\n"+len+" domains");       
+                    upload_b.setAttribute("style", "width: 30%; height:25px; margin-top:15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 5px; background-color:rgba(240, 248, 255, 0.479)");
+                    upload_t.setAttribute("style", "font-size:14px; color: aliceblue");
+
+                    upload_b.addEventListener("click",upload);
+                    upload_b.params=[eid, len, arraystr];
+                }
+                else{
+                    message.innerText=String(file.name+" does not contain any valid domain names.");
+                }
             }
         }
         reader.readAsText(file);
 
     }
+    else{
+        message.innerText=String(file.name+" is not a vaild text file.");
+    }
+}
+
+function upload(e){
+    let eid=e.currentTarget.params[0];
+    let len=e.currentTarget.params[1];
+    let arraystr=e.currentTarget.params[2];
+    
+    console.log("UPLOAD");
+    console.log(arraystr);
+
+    let b64_arraystr=btoa(arraystr);
+    return;
+    fetch('https://seclab.co.kr/upload',{
+        method:'POST',
+        headers:{
+            'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+            id:eid,
+            length:len,
+            payload:b64_arraystr
+        })
+    })
+    .then(response=>response.json())
+    .then(data=>{
+        console.log(data);
+        if(data.status=="ok"&&data.length=="len"){
+            console.log("Upload complete");
+        }
+        else{
+            console.log("Upload Failure");
+        }
+    })
+    .catch(error=>console.log(error));        
+
 }

@@ -57,7 +57,8 @@
       ],
       "excludedInitiatorDomains":[
         "app.requestly.io",
-        "about:client"
+        "about:client",
+        "chrome-extension://*"
       ],
       "excludedRegexFilter": "(.*de_ad_before=daylight.*)|(.*_rq_delayed=true.*)"
       }

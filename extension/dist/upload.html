@@ -30,15 +30,13 @@
     <h1 align="center" style="font-size:18px">Upload your whitelist</h1>
     <div style="width:100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <div id="dropbox" style="display:flex; flex-direction:column; justify-content: center; height: 100px; width: 70%; border-radius:5px; background-color:rgba(109, 174, 231, 0.471);">
-            <h1 align="center" style="font-size:16px; color:aliceblue">Drag and Drop Here</h1>
+            <h1 align="center" style="font-size:16px; color:aliceblue" id="message">Drag and Drop Here</h1>
             <input type="file" id="whitelistfile" accept=".txt" style="display: none;">
         </div>
+        <div id="uploadbutton" style="width: 30%; height:25px; margin-top:15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 5px; background-color: rgba(240, 248, 255, 0.276);">
+            <h1 align="center" style="font-size:14px; color: rgba(240, 248, 255, 0.4)" id="upload">Upload</h1>
+        </div>
     </div>
-
-    <div align="center" id="histdiv" style="margin-bottom:15px;display:flex; flex-direction:column; align-items:center; justify-content:start; width:230px;">
-        
-    </div>
-
     <script src="upload.js"></script>
   </body>
 </html>
