@@ -9,11 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
       document.location.href="history.html";
     });
 
+    const report_b=document.getElementById("report");
+    report_b.addEventListener("click",function(){
+      document.location.href="report.html";
+    });
+
     chrome.storage.sync.get({'allowlist':[]},function(res){
         let allowlist=res.allowlist;
         console.log(allowlist);
 
-        build_list(allowlist);
+        build_list(allowlist, allowlist);
     });
     
 
@@ -34,8 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         allowlist.push(url);
                         chrome.storage.sync.set({"allowlist":allowlist},function(){
                             custominput.remove();
-
-                            build_list(allowlist);        
+                            const addlist=[url];
+                            build_list(addlist, allowlist);        
                         });
                     }
                 });
@@ -71,12 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-function build_list(allowlist){
+function build_list(addlist ,allowlist){
     const whitediv=document.getElementById("whitediv");
     const plusdiv=document.getElementById("plusdiv");
     const plusimg=document.getElementById("plusimg");
     
-    for(let url of allowlist){
+    for(let url of addlist){
         plusimg.setAttribute("src","images/plus_icon.png");
         plusimg.setAttribute("style", "margin:5px; height:17px");
         plusdiv.setAttribute("style", "margin-bottom:15px; background-color: rgb(88, 99, 119); width:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
@@ -128,6 +133,17 @@ function build_list(allowlist){
             }
             chrome.storage.sync.set({"allowlist":allowlist});
         });
-    
+        
+        reportbutton.addEventListener("click",function(event){
+            sendReport(event, url);
+        });
+    }
+}
+
+function sendReport(event, url){
+    console.log(url);
+    if(event.isTrusted){
+
+        //send elem to server
     }
 }

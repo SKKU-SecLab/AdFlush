@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
       document.location.href="customlist.html";
     });
 
+    const report_b=document.getElementById("report");
+    report_b.addEventListener("click",function(){
+      document.location.href="report.html";
+    });
+
 
 
     const histdiv=document.getElementById("histdiv");

@@ -28,7 +28,8 @@
     "declarativeNetRequestFeedback",
     "storage",
     "offscreen",
-    "identity"
+    "identity",
+    "tabs"
   ],
   "action": {
     "default_popup": "popup.html",

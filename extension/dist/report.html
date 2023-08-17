@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        display:flex;
+        flex-direction: column;
+        width: 280px;
+        font-family: Arial, sans-serif;
+        color: aliceblue;
+        background-color: rgb(0, 0, 54);
+        align-items: center;
+        justify-content: center;
+        -webkit-user-select: none;
+        -ms-user-select:none;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body draggable="false">
+    <div style="width:100%; display:flex; flex-direction:row; align-items:center; justify-content:space-between">
+      <img src="images/back_icon.png" id="back" alt="back" style="height:20px; filter:invert(100%);">
+      <div style="height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;">
+        <img src="images/history_icon.png" id="history" alt="history" style="height:20px; margin:5px 10px;">
+        <img src="images/setting_icon.png" id="setting" alt="settings" style="height:25px; filter:invert(100%);">
+        <img src="images/reportoptions_icon.png" id="report" alt="report" style="height:20px;margin:5px 10px; filter:invert(50%);">
+      </div>
+    </div>
+    <hr style="height:1px; width:100%; border:none; background-color:rgba(240, 248, 255, 0.479)">
+    <div style="width:100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div id="upload" style="margin:15px; display: flex; flex-direction:column; height: 30px; width:80%; background-color: rgb(0, 93, 175); justify-content: center; border-radius: 8px; border-width: 3px; border-style: solid; border-top-color: rgb(22, 119, 204); border-left-color: rgb(22, 119, 204); border-bottom-color: rgb(12, 69, 119); border-right-color: rgb(12, 69, 119);">
+            <h1 align="center" style="font-size:18px">Upload Whitelist File</h1>
+        </div>
+        <div id="submit" style="margin:15px; display: flex; flex-direction:column; height: 45px; width:80%; background-color: rgb(0, 93, 175); justify-content: center; border-radius: 8px; border-width: 3px; border-style: solid; border-top-color: rgb(22, 119, 204); border-left-color: rgb(22, 119, 204); border-bottom-color: rgb(12, 69, 119); border-right-color: rgb(12, 69, 119);">
+            <h1 align="center" style="font-size:18px">Submit a Review<br> of De-Adlock</h1>
+        </div>
+    </div>
+
+    <div align="center" id="histdiv" style="margin-bottom:15px;display:flex; flex-direction:column; align-items:center; justify-content:start; width:230px;">
+        
+    </div>
+
+    <script src="report.js"></script>
+  </body>
+</html>

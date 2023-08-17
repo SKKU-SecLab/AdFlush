@@ -35,6 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
   history_b.addEventListener("click",function(){
     document.location.href="history.html";
   });
+
+  const report_b=document.getElementById("report");
+  report_b.addEventListener("click",function(){
+    document.location.href="report.html";
+  });
 });
 
 
