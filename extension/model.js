@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const ort=require('onnxruntime-web');
     let session;
     
-    session = await ort.InferenceSession.create('./deadlock.onnx');
+    session = await ort.InferenceSession.create('./AdFlush.onnx');
     chrome.runtime.sendMessage({action:'madeModel', input:session.inputNames});
   
     chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse){

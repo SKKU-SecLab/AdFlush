@@ -40,7 +40,6 @@ function drop(event){
 
     const data=event.dataTransfer;
     const file=data.files[0];
-    console.log(file);
     const message=document.getElementById("message");
 
     if(String(file.name).endsWith(".txt")&&String(file.type)=="text/plain"){
@@ -98,31 +97,36 @@ function upload(e){
     let arraystr=e.currentTarget.params[2];
     
     console.log("UPLOAD");
-    console.log(arraystr);
 
     let b64_arraystr=btoa(arraystr);
-    return;
-    fetch('https://seclab.co.kr/upload',{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json'
-        },
-        body:JSON.stringify({
-            id:eid,
-            length:len,
-            payload:b64_arraystr
-        })
+    fetch("http://127.0.0.1:8000/verify",{
+        method:"GET",
     })
     .then(response=>response.json())
     .then(data=>{
-        console.log(data);
-        if(data.status=="ok"&&data.length=="len"){
-            console.log("Upload complete");
-        }
-        else{
-            console.log("Upload Failure");
-        }
-    })
-    .catch(error=>console.log(error));        
-
+        const url="http://127.0.0.1:8000/verify/";
+        fetch('http://127.0.0.1:8000/upload/',{
+            method:'POST',
+            headers:{
+                'X-CSRFToken':data["X-CSRFToken"],
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+                eid:eid,
+                length:len,
+                payload:b64_arraystr
+            })
+        })
+        .then(response=>response.json())
+        .then(data=>{
+            if(data.status=="ok"&&data.length==len){
+                alert("Upload Complete");
+                document.location.href="popup.html";
+            }
+            else{
+                alert("Upload Failed");
+            }
+        })
+        .catch(error=>console.log(error));        
+    });
 }

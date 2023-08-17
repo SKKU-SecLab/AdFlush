@@ -97,13 +97,6 @@ function build_list(addlist ,allowlist){
     
         const buttondiv=document.createElement("div");
         buttondiv.setAttribute("style","height:100%; width:50px; display:flex; flex-direction:row; align-items:center; justify-content:center;")
-
-        const reportbutton=document.createElement("div");
-        reportbutton.setAttribute("style", "height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center; ")
-        
-        const reportbuttonimg=document.createElement("img");
-        reportbuttonimg.setAttribute("style","margin:5px 3px; height:17px; filter: invert(100%);");
-        reportbuttonimg.setAttribute("src","images/report_icon.png");
     
         const delbutton=document.createElement("div");
         delbutton.setAttribute("style", "height:100%; display:flex; flex-direction:row; align-items:center; justify-content:center;");
@@ -115,10 +108,8 @@ function build_list(addlist ,allowlist){
         whitediv.appendChild(whitelistelem);
         whitelistelem.appendChild(urlelem);
         whitelistelem.appendChild(buttondiv);
-        buttondiv.appendChild(reportbutton);
         buttondiv.appendChild(delbutton); 
         delbutton.appendChild(delbuttonimg);
-        reportbutton.appendChild(reportbuttonimg);
     
         
         plusdiv.setAttribute("tag","plus");
@@ -133,17 +124,6 @@ function build_list(addlist ,allowlist){
             }
             chrome.storage.sync.set({"allowlist":allowlist});
         });
-        
-        reportbutton.addEventListener("click",function(event){
-            sendReport(event, url);
-        });
-    }
-}
 
-function sendReport(event, url){
-    console.log(url);
-    if(event.isTrusted){
-
-        //send elem to server
     }
 }

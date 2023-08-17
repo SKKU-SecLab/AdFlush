@@ -53,12 +53,15 @@
         "other"
       ],
       "excludedRequestDomains":[
-        "app.requestly.io"
+        "app.requestly.io",
+        "127.0.0.1",
+        "seclab.co.kr"
       ],
       "excludedInitiatorDomains":[
         "app.requestly.io",
         "about:client",
-        "chrome-extension://*"
+        "chrome-extension://*",
+        "seclab.co.kr"
       ],
       "excludedRegexFilter": "(.*de_ad_before=daylight.*)|(.*_rq_delayed=true.*)"
       }

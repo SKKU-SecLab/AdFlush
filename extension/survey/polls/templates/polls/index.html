@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {% csrf_token %}
+    <input type="hidden" name="csrfmiddlewaretoken" value="">
+    <style>
+        body {
+            width: 95%;
+            height: 95%;
+            display: flex;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+            align-items: center;
+            justify-content: baseline;
+            background-color: rgb(0, 0, 54);
+            color:aliceblue;
+        }
+        #titlediv {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items:  center;
+            justify-content:baseline;
+        }
+        #titlediv h1 {
+            text-align: center;
+            font-size: 28px;
+        }
+        #questiondiv {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: baseline;
+            margin: 50px;
+        }
+        form{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+        }
+        hr {
+            background-color:aliceblue;
+            width: 100%;
+            height: 0.5px;
+            border-width: 0.4px;
+        }
+        #quesTextdiv {
+            align-self: baseline;
+            margin: 0;
+        }
+        #quesTextdiv h1 {
+            font-size: 20px;
+        }
+        #choicediv {
+            height: 50px;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            justify-content: space-around;
+        }
+        #choiceelem {
+            height: 50px;
+            width: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            justify-content: space-between;
+        }
+        #choiceelem label {
+            font-size: 20px;
+            height: 100%;
+        }
+        #submitdiv {
+            margin:20px;
+            width: 60%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+        }
+        #submitdiv input {
+            height: 60px;
+            font-size: 26px;
+            width: 160px;
+        }
+        input[type=radio] {
+            border:0px;
+            width: 100%;
+            height: 20px;
+            accent-color: rgb(29, 29, 178);
+        }
+    </style>
+</head>
+<body>
+    <div id="titlediv">
+        <h1>Please select scores for each question (5 for very high, 1 for very low)</h1>
+    </div>
+{% if latest_question_list %}
+    <div id="questiondiv">
+            <form action="{% url 'polls:vote' %}" method="post">
+                    {% csrf_token %}
+        {% for question in latest_question_list %}
+            <div id="quesTextdiv">
+                <h1>{{question.question_text}}</h1>
+            </div>
+            <div id="choicediv">
+                {% for choice in question.choice_set.all %}
+                <div id="choiceelem">
+                    <input type="radio" name="choice{{question.id}}" id="choice{{forloop.counter}}" value="{{choice.id}}">
+                    <label for="choice{{forloop.counter}}">{{choice.choice_text}}</label><br>
+                </div>
+                {% endfor %}                
+            </div>
+            <hr>
+                {% endfor %}
+                <div id="submitdiv">
+                    <input type="submit" value="Submit">
+                </div>
+            </form>
+    </div>
+{% else %}
+    <p>No polls are availavle.</p>
+{% endif %}
+</body>
+</html>

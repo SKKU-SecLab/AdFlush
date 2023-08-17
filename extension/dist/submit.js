@@ -1,20 +1,28 @@
 document.addEventListener("DOMContentLoaded",()=>{
-    const debug=document.getElementById("debug");
+    //const debug=document.getElementById("debug");
     const eid=chrome.runtime.id;
-    debug.innerText=eid;
+    //debug.innerText=eid;
 
-    fetch('https://seclab.co.kr/verify',{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json'
-        },
-        body:JSON.stringify({id:eid})
+    const init="http://127.0.0.1:8000/verify/";
+    fetch(init,{
+        method:"GET"
     })
     .then(response=>response.json())
     .then(data=>{
-        console.log(data);
-        document.location.href=data.url;
+        //const url='https://seclab.co.kr/verify';
+        const url="http://127.0.0.1:8000/verify/";
+        fetch(url,{
+            method:'POST',
+            headers:{
+                'X-CSRFToken':data["X-CSRFToken"],
+                'Content-Type':'application/json'
+            },
+            body: JSON.stringify({eid :String(eid)})
+        })
+        .then(response=>response.json())
+        .then(data=>{
+            document.location.href=data.polls_url;
+        })
+        .catch(error=>console.log(error));  
     })
-    .catch(error=>console.log(error));
-
 });

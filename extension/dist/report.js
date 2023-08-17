@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
             for(const tab of tabs){
                 const turl=tab.url;
     
-                if(turl.endsWith("submit.html")){
+                if(turl.startsWith("http://127.0.0.1:8000/polls/")){
                     found=true;
                     break;
                 }
