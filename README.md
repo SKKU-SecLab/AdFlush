@@ -1,6 +1,6 @@
 # Welcome to AdFlush
 
-Document for submitted paper "AdFlush: A Lightweight and Accurate Web Tracking and Advertisement Detector" at NDSS 2024. 
+Document for submitted paper "AdFlush: A Lightweight and Accurate Web Tracking and Advertisement Detector" at Web Conference 2024. 
 *AdFlush* is the first advertisement and web tracker blocker Chrome Extension based on Machine Learning prediction. With thorough feature engineering process considering state-of-the-art methodology, *AdFlush* takes advantage of its lightweight and powerful classification ability to detect and block advertisement and web trackers preserving user privacy in the same time. Please refer to our paper for details of the framework and evaluation results of *AdFlush*.
 
 The demo of exploring real-life web sites and detecting, blocking advertisements and trackers using *AdFlush* is available <a href="https://www.youtube.com/watch?v=PNvW-XfJMck">here</a>.
