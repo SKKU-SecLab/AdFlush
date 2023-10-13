@@ -382,18 +382,14 @@ function featureExtract(url, requestHeader){
           returnFeatures['ng_15_15_15']=0;
           
           if (string_content_type === 'script') {
-            // console.log("Javascript!");
             const js = await getRAWREQ(url,method,content_header);
             if(js!=""){
-              // let start=Date.now();
               let nodots=0;
               let nobrackets=0;
               try{
                 let comments=[];
-                const ast=parse(js,{onComment:comments});//, {errorRecovery:true});
-                // console.log(ast);
+                const ast=parse(js,{onComment:comments});
                 const traversal=await treewalk(ast);
-                // let start=Date.now();
                 if('ast' in traversal){
                   nodots+=traversal['dot'];
                   nobrackets+=traversal['bracket'];
