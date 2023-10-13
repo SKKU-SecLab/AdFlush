@@ -364,9 +364,9 @@ function featureExtract(url, requestHeader){
           //JavaScript features
           //if js
           let requestreg=/https?:\/\//g;
-          let set_storage_reg=/(Storage\.setItem)|(Storage\.[^=;]*=)|(Storage\[[^=;]\]=)/g;
-          let get_storage_reg=/(Storage\.getItem)|(Storage\.[^=\s]+)|(Storage\[.*\][^=\s]+)/g;
-          let get_cookie_reg=/(cookies?\.get)|(cookies?\.[^=\s]+)|(cookies?\[.*\][^=\s]+)|(getElements?By\w{2,7}\("cookies"\))/g;
+          let set_storage_reg=/(Storage\.setItem)|(Storage\[[^]]+\] *=)|(Storage\.[^=;\n]+(?!;\n)=)|(Storage *=)/g;
+          let get_storage_reg=/(Storage\.get)|(Storage\[[^]]+\](?!=)*(?=\n|;))|(Storage\.[\w]+(?!=)(?=;|\n))|(Storage(?!=)(?=;|\s))/g;
+          let get_cookie_reg=/(cookies?\.get)|(cookies?\[[^]]+\](?!=)*(?=\n|;))|(cookies?\.[\w]+(?!=)(?=;|\n))|(cookies?(?!=)(?=;|\s))/g;
 
           returnFeatures['num_requests_sent']=0;
           returnFeatures['num_set_storage']=0;
