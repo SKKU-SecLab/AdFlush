@@ -47,8 +47,7 @@ def inference_mojo(input, label, is_mutated):
     
 def inference_onnx(input, label, is_mutated):
     # Check that the IR is well formed
-    #model=onnx.load('model/AdFlush.onnx')
-    model=onnx.load('extension/dist/deadlock.onnx')
+    model=onnx.load('model/AdFlush.onnx')
     try:
         onnx.checker.check_model(model)
     except Exception as e:
