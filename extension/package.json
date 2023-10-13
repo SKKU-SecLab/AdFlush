@@ -18,5 +18,10 @@
     "webpack": "^5.84.0",
     "webpack-cli": "^5.1.1"
   },
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@babel/parser": "^7.23.0",
+    "eslint": "^8.47.0",
+    "meriyah": "^4.3.7"
+  }
 }

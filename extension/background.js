@@ -1,32 +1,142 @@
 const { getDomain } = require('tldjs');
+const {parse}=require('meriyah');
 
-let dynamic_rule_num=4;
+let start_rule_num=10;
+let dynamic_rule_num=start_rule_num;
 let blocked_url_numbers=0;
 let messageQueue = [];
 let time_dict={};
 let ext_time=[];
 let inf_time=[];
+let toggle=true;
+
+function treewalk(node){
+  return new Promise(function(resolve){
+    const ret = [];
+    const stack = [node];
+    let idflen=0;
+    let idfcnt=0;
+    let dotinstring=0;
+    let bracketinstring=0;
+  
+    while (stack.length > 0) {
+      const current = stack.pop();
+  
+      if (Array.isArray(current)) {
+        for (const child of current) {
+          stack.push(child);
+        }
+      } else if (typeof current === 'object' && current !== null) {
+        for (const key in current) {
+          const child = current[key];
+          if (typeof child === 'object' || Array.isArray(child)) {
+            stack.push(child);
+          }
+        }
+        if ('type' in current) {
+          ret.push(current.type);
+          if(current['type']=='Identifier'){
+            idflen=idflen+current['name'].length;
+            idfcnt=idfcnt+1;
+          }
+        }
+        if ('value' in current){
+          let val=current['value'];
+          dotinstring+=val.split('.').length-1;
+          bracketinstring+=val.split(/\[|\]|\(|\)/).length-1;
+        }
+      }
+    }
+    resolve({'ast':ret.reverse(),'avg_ident':idflen/idfcnt, 'dot':dotinstring,'bracket':bracketinstring});
+  });
+}
+
+const ngramdict={
+  'ArrayExpression': 0,
+    'ArrayPattern': 5,
+    'ArrowFunctionExpression': 0,
+    'AssignmentExpression': 0,
+    'AssignmentPattern': 5,
+    'AwaitExpression': 0,
+    'BinaryExpression': 0,
+    'BlockComment': 7,
+    'BlockStatement': 2,
+    'BreakStatement': 2,
+    'CallExpression': 0,
+    'CatchClause': 13,
+    'ChainExpression':0,
+    'ClassBody': 14,
+    'ClassDeclaration': 4,
+    'ClassExpression': 0,
+    'ConditionalExpression': 0,
+    'ContinueStatement': 2,
+    'DebuggerStatement': 2,
+    'DoWhileStatement': 2,
+    'EmptyStatement': 2,
+    'ExportAllDeclaration': 4,
+    'ExportDefaultDeclaration': 4,
+    'ExportNamedDeclaration': 4,
+    'ExportSpecifier': 6,
+    'ExpressionStatement': 2,
+    'ForInStatement': 2,
+    'ForOfStatement': 2,
+    'ForStatement': 2,
+    'FunctionDeclaration': 4,
+    'FunctionExpression': 0,
+    'Identifier': 15,
+    'IfStatement': 2,
+    'Import': 16,
+    'ImportDeclaration': 4,
+    'ImportDefaultSpecifier': 6,
+    'ImportNamespaceSpecifier': 6,
+    'ImportSpecifier': 6,
+    'LabeledStatement': 2,
+    'LineComment': 7,
+    'Literal': 3,
+    'LogicalExpression': 0,
+    'MemberExpression': 0,
+    'MetaProperty': 17,
+    'MethodDefinition': 18,
+    'NewExpression': 0,
+    'ObjectExpression': 0,
+    'ObjectPattern': 5,
+    'Program': 8,
+    'Property': 9,
+    'RestElement': 1,
+    'ReturnStatement': 2,
+    'SequenceExpression': 0,
+    'SpreadElement': 1,
+    'Super': 10,
+    'SwitchCase': 11,
+    'SwitchStatement': 2,
+    'TaggedTemplateExpression': 0,
+    'TemplateElement': 1,
+    'TemplateLiteral': 3,
+    'ThisExpression': 0,
+    'ThrowStatement': 2,
+    'TryStatement': 2,
+    'UnaryExpression': 0,
+    'UpdateExpression': 0,
+    'VariableDeclaration': 4,
+    'VariableDeclarator': 12,
+    'WhileStatement': 2,
+    'WithStatement': 2,
+    'YieldExpression': 0,
+	'StaticBlock' :  4,
+	'ImportExpression' :  0,
+	'ParenthesizedExpression' :  0,
+}
 
 async function processNextMessage() {
   if (messageQueue.length > 0) {
     const message = messageQueue[0];
     let payload=message['payload'];
-    let whole_url=message['url'];
-    let singleslashreg=/https?:\/[^\/]/;
-    let url=whole_url.substring(35);
-    if(url[0]=='/'){
-      url=url.substring(1);
-    }
-    if(url.match(singleslashreg)){
-      url=url.slice(0,6)+'/'+url.slice(6);
-    }
+    let url=message['url'];
 
     let pred;
-    let prob;
     await chrome.runtime.sendMessage({action: 'inference', input:payload},async function(response) {
       try{
         pred=response['data'];
-        prob=response['prob'];
 
         let times=time_dict[url];
         if(times&&times.length==2){
@@ -34,59 +144,30 @@ async function processNextMessage() {
             let now=Date.now();
             let e_time=times[1]-times[0];
             let i_time=now-times[1];
-            if(e_time==NaN){
+            if(isNaN(e_time)){
               e_time=0;
             }
-            if(i_time==NaN){
+            if(isNaN(i_time)){
               i_time=0;
             }
             ext_time.push(e_time);
             inf_time.push(i_time);
-            delete time_dict[url];  
+            delete time_dict[url];
+            // console.log("Extract:",e_time,"Inference:",i_time);
           }catch(e){
+            // console.log(e);
           }
         }
       }catch(e){
+        console.log(e);
       }
       if(Number(pred[0])==1){
         blocked_url_numbers+=1;
-        dynamic_rule_num=dynamic_rule_num%4996;
+        dynamic_rule_num=dynamic_rule_num%5000;
         if(dynamic_rule_num==0){
-          dynamic_rule_num=4;
+          dynamic_rule_num=start_rule_num;
         }
-        chrome.declarativeNetRequest.updateDynamicRules(
-          {
-            addRules:[{
-                "id": dynamic_rule_num,
-                "priority": 5,
-                "action": {
-                  "type": "block"
-                },
-                "condition":{
-                  "urlFilter":url,
-                  "resourceTypes":[
-                    "csp_report",
-                    "font",
-                    "image",
-                    "main_frame",
-                    "media",
-                    "object",
-                    "ping",
-                    "script",
-                    "stylesheet",
-                    "sub_frame",
-                    "webbundle",
-                    "webtransport",
-                    "xmlhttprequest",
-                    "other"
-                  ]
-                }
-              }
-            ],
-            removeRuleIds:[dynamic_rule_num]
-          }
-        );
-        
+        addDynamicRule("block",dynamic_rule_num, url);        
         dynamic_rule_num+=1;
         console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
       }
@@ -106,9 +187,8 @@ function addToQueue(url, payload) {
 chrome.webRequest.onBeforeSendHeaders.addListener(
   async function(details){
     let url=details['url'];
-    let dom=details['initiator'];
-    let singleslashreg=/https?:\/[^\/]/;
-    if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")){
+    let singleslashreg=/https?:\/[^/]/;
+    if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")&&toggle){
       let localurl=url.substring(35);
       if(localurl[0]=='/'){
         localurl=localurl.substring(1);
@@ -119,61 +199,57 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       let temparray=[];
       temparray.push(Date.now());
       time_dict[localurl]=temparray;
+      if('initiator' in details){
+        let features=await featureExtract(localurl, details);
 
-      let features=await featureExtract(details);
-
-      let dataA=[];
-      try{
-        dataA.push(features['content_policy_type']);
-        dataA.push(features['fqdnEmbedding'][0]);
-        dataA.push(features['fqdnEmbedding'][1]);
-        dataA.push(features['fqdnEmbedding'][12]);
-        dataA.push(features['fqdnEmbedding'][14]);
-        dataA.push(features['fqdnEmbedding'][17]);
-        dataA.push(features['fqdnEmbedding'][23]);
-        dataA.push(features['fqdnEmbedding'][24]);
-        dataA.push(features['fqdnEmbedding'][25]);
-        dataA.push(features['fqdnEmbedding'][26]);
-        dataA.push(features['fqdnEmbedding'][27]);
-        dataA.push(features['fqdnEmbedding'][4]);
-        dataA.push(features['fqdnEmbedding'][6]);
-        dataA.push(features['is_subdomain']);
-        dataA.push(features['is_third_party']);
-        dataA.push(features['keyword_char_present']);
-        dataA.push(features['num_requests_sent']);
-        dataA.push(features['num_set_storage']);
-        dataA.push(features['reqEmbedding'][121]);
-        dataA.push(features['reqEmbedding'][135]);
-        dataA.push(features['reqEmbedding'][179]);
-        dataA.push(features['reqEmbedding'][18]);
-        dataA.push(features['reqEmbedding'][21]);
-        dataA.push(features['reqEmbedding'][22]);
-        dataA.push(features['reqEmbedding'][33]);
-        dataA.push(features['reqEmbedding'][38]);
-        dataA.push(features['reqEmbedding'][91]);
-
-        time_dict[localurl].push(Date.now());
-        addToQueue(url, dataA);  
-      }catch(e){
+        let dataA=[];
+        try{
+          dataA.push(features['content_policy_type']);
+          dataA.push(features['url_length']);
+          dataA.push(features['brackettodot']);
+          dataA.push(features['is_third_party']);
+          dataA.push(features['keyword_char_present']);
+          dataA.push(features['num_get_storage']);
+          dataA.push(features['num_set_storage']);
+          dataA.push(features['num_get_cookie']);
+          dataA.push(features['num_requests_sent']);
+          dataA.push(features['reqEmbedding'][33]);
+          dataA.push(features['reqEmbedding'][135]);
+          dataA.push(features['reqEmbedding'][179]);
+          dataA.push(features['fqdnEmbedding'][4]);
+          dataA.push(features['fqdnEmbedding'][13]);
+          dataA.push(features['fqdnEmbedding'][14]);
+          dataA.push(features['fqdnEmbedding'][15]);
+          dataA.push(features['fqdnEmbedding'][23]);
+          dataA.push(features['fqdnEmbedding'][26]);
+          dataA.push(features['fqdnEmbedding'][27]);
+          dataA.push(features['ng_0_0_2']);
+          dataA.push(features['ng_0_15_15']);
+          dataA.push(features['ng_2_13_2']);
+          dataA.push(features['ng_15_0_3']);
+          dataA.push(features['ng_15_0_15']);
+          dataA.push(features['ng_15_15_15']);
+          dataA.push(features['avg_ident']);
+          dataA.push(features['avg_charperline']);
+          if(localurl in time_dict){
+            time_dict[localurl].push(Date.now());
+            addToQueue(localurl, dataA);  
+          }
+        }catch(e){
+          console.log(e);
+        }
+  
       }
     }
   },  { urls: ["<all_urls>"] },
   ['requestHeaders']
 );
 
-function featureExtract(requestHeader){
-    let url=requestHeader['url'];
+function featureExtract(url, requestHeader){
     let method=requestHeader['method'];
     let content_header=requestHeader['requestHeaders'];
-    let singleslashreg=/https?:\/[^\/]/;
     let returnFeatures={};
-    url=url.substring(35);
-    if(url[0]=='/'){
-      url=url.substring(1);
-    }
-    if(url.match(singleslashreg)){
-      url=url.slice(0,6)+'/'+url.slice(6);
-    }
+
     let src_dom=requestHeader['initiator'];
     let urlsplit=url.split('/');
     let domain=""
@@ -182,7 +258,8 @@ function featureExtract(requestHeader){
     }else{
       domain=urlsplit[1];
     }
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
+      (async()=>{
         try {
           const [fqdnVector, reqVector] = await Promise.all([
             new Promise((innerResolve) => {
@@ -196,16 +273,16 @@ function featureExtract(requestHeader){
               });
             })
           ]);
-          
+        
           //URL features
+          returnFeatures['url_length']=url.length;
           let fqdn=getDomain(domain);
           returnFeatures['is_third_party']=1;
-          returnFeatures['is_subdomain']=0;
           if(fqdn==domain){
             returnFeatures['is_third_party']=0;
-            returnFeatures['is_subdomain']=1;
           }
-
+          returnFeatures['fqdnEmbedding']=Array(30).fill(0);
+          returnFeatures['reqEmbedding']=Array(200).fill(0);
           //source embedding
           const vec_length = 30;
           try{
@@ -220,7 +297,7 @@ function featureExtract(requestHeader){
             const avg = (await embedding).map((val) => val / url2list.length);
             returnFeatures['fqdnEmbedding'] = avg;  
           }catch(e){
-
+            console.log(e);
           }
           //request embedding
           const req_length = 200;
@@ -241,15 +318,13 @@ function featureExtract(requestHeader){
           let keyword_char = [".", "/", "&", "=", ";", "-", "_", "/", "*", "^", "?", ";", "|", ","];
           //keyword_char_present
           let keyword_char_present=0;
-          let keyword_raw_present=0;
-          for(let j=0;j<keyword_raw.length;j++){
-            let matches=[...url.matchAll(new RegExp(keyword_raw[j],"ig"))];
+          for(let keyword of keyword_raw){
+            let matches=[...url.matchAll(new RegExp(keyword,"ig"))];
         
             if (matches.length>0){
-              keyword_raw_present=1;
-              for(let i=0;i<matches.length;i++){
-                if(matches[i].index-1>=0){
-                  let pre=url[matches[i].index-1];
+              for(let match of matches){
+                if(match.index-1>=0){
+                  let pre=url[match.index-1];
                   if(keyword_char.includes(pre)){
                     keyword_char_present=1;
                     break;
@@ -266,63 +341,237 @@ function featureExtract(requestHeader){
         //HTTP Header features
           let string_content_type=requestHeader.type;
           let policyMap = {
-            main_frame : 0.036026,
-            script : 0.474811,
-            sub_frame : 0.742155,
-            subdocument : 0.742155,
-            image : 0.384715,
-            stylesheet : 0.078971,
-            font : 0.109323,
-            xmlhttprequest : 0.50522,
-            beacon : 0.95697,
-            ping: 0.95697,
-            imageset : 0.017512,
-            csp_report : 0.145729,
-            media : 0.169891,
-            other : 0.033046,
-            websocket : 0.258317,
-            object : 0.080001
+            object: 0.08000072,
+            websocket: 0.25831702,
+            other: 0.033045977,
+            media: 0.16989118,
+            beacon: 0.95697004,
+            ping:.95697004,
+            csp_report: 0.14572865,
+            sub_frame: 0.74215454,
+            subdocument:0.74215454,
+            imageset: 0.01751194,
+            main_frame: 0.03602579,
+            xmlhttprequest: 0.5052196,
+            stylesheet: 0.07897147,
+            script: 0.4748115,
+            image: 0.38471517,
+            font: 0.109323405
           };
           returnFeatures['content_policy_type']=policyMap[string_content_type];
+          returnFeatures['num_get_cookie']=0;
 
-          //DOM features
+          //JavaScript features
           //if js
           let requestreg=/https?:\/\//g;
-          let storage_reg=/(localStorage\.setItem)|(localStorage\..*=)/g;
+          let set_storage_reg=/(Storage\.setItem)|(Storage\.[^=;]*=)|(Storage\[[^=;]\]=)/g;
+          let get_storage_reg=/(Storage\.getItem)|(Storage\.[^=\s]+)|(Storage\[.*\][^=\s]+)/g;
+          let get_cookie_reg=/(cookies?\.get)|(cookies?\.[^=\s]+)|(cookies?\[.*\][^=\s]+)|(getElements?By\w{2,7}\("cookies"\))/g;
+
           returnFeatures['num_requests_sent']=0;
           returnFeatures['num_set_storage']=0;
-
+          returnFeatures['num_get_storage']=0;
+          returnFeatures['brackettodot']=0;
+          returnFeatures['avg_ident']=0;
+          returnFeatures['avg_charperline']=0;
+          returnFeatures['ng_0_0_2']=0;
+          returnFeatures['ng_0_15_15']=0;
+          returnFeatures['ng_2_13_2']=0;
+          returnFeatures['ng_15_0_3']=0;
+          returnFeatures['ng_15_0_15']=0; 
+          returnFeatures['ng_15_15_15']=0;
+          
           if (string_content_type === 'script') {
             const js = await getRAWREQ(url,method,content_header);
-            let ms=[...js.matchAll(requestreg)];
-            returnFeatures['num_requests_sent']=ms.length;
+            if(js!=""){
+              let nodots=0;
+              let nobrackets=0;
+              try{
+                let comments=[];
+                const ast=parse(js,{onComment:comments});
+                const traversal=await treewalk(ast);
+                if('ast' in traversal){
+                  nodots+=traversal['dot'];
+                  nobrackets+=traversal['bracket'];
+                  for(let comm=0;comm<comments.length;comm++){
+                    nodots+=comments[comm]['value'].split('.').length-1;
+                    nobrackets+=comments[comm]['value'].split(/\[||\]||\(\\\)/).length-1;
+                  }
+                  const gramsource=traversal['ast'];
+                  let ngram={};
+                  let ngramsum=0;
+                  if(gramsource.length>2){
+                    ngramsum=gramsource.length-2;
+                    for(let i=2;i<gramsource.length;i++){
+                      let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
+                      if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
+                        if(pattern in ngram){
+                          ngram[pattern]=ngram[pattern]+1;
+                        }
+                        else{
+                          ngram[pattern]=1;
+                        }  
+                      }
+                    }  
+                  }
+                  for(let i in ngram){
+                    ngram[i]=ngram[i]/ngramsum;
+                  } 
+  
+                  if('0_0_2' in ngram){
+                    returnFeatures['ng_0_0_2']=ngram['0_0_2'];
+                  }
+                  if('0_15_15' in ngram){
+                    returnFeatures['ng_0_15_15']=ngram['0_15_15'];
+                  }
+                  if('2_13_2' in ngram){
+                    returnFeatures['ng_2_13_2']=ngram['2_13_2'];
+                  }
+                  if('15_0_3' in ngram){
+                    returnFeatures['ng_15_0_3']=ngram['15_0_3'];
+                  }
+                  if('15_0_15' in ngram){
+                    returnFeatures['ng_15_0_15']=ngram['15_0_15'];
+                  }
+                  if('15_15_15' in ngram){
+                    returnFeatures['ng_15_15_15']=ngram['15_15_15'];
+                  }
+  
+                  returnFeatures['avg_ident']=traversal['avg_ident'];
+                }  
+              }
+              catch(exception){}
+              let brackets=js.split(/\[|\]|\(|\)/).length -1-nobrackets;
+              let dots=js.split('.').length-1-nodots;
+              if(dots>0 && brackets >0){
+                returnFeatures['brackettodot']=brackets/dots;
+              }
+              returnFeatures['num_requests_sent']=[...js.matchAll(requestreg)].length;
+              returnFeatures['num_set_storage']=[...js.matchAll(set_storage_reg)].length;
+              returnFeatures['num_get_storage']=[...js.matchAll(get_storage_reg)].length;
+              returnFeatures['num_get_cookie']=[...js.matchAll(get_cookie_reg)].length;
+              let lines=js.split('\n').length;
+              if(lines>0){
+                returnFeatures['avg_charperline']=js.length/lines;
+              }
+            }
 
-            let ms2=[...js.matchAll(storage_reg)];
-            returnFeatures['num_set_storage']=ms2.length;
             //if html
           }else if(string_content_type=='xmlhttprequest'||string_content_type=='sub_frame'){
             let xhr=await getRAWREQ(url,method,content_header);
-            xhr=xhr.replace(/\s/g,"");
-            let script_reg=/<script[^>]*>[^<]*<\/script>/g;
-            let script_blocks=[...xhr.matchAll(script_reg)];
-            let match_count=0
-            let str_match_count=0;
-            if(script_blocks){
-              for(let i=0;i<script_blocks.length;i++){
-                let script=script_blocks[i][0];
-                let ms=[...script.matchAll(requestreg)];
-                match_count+=ms.length;
-                let ms2=[...script.matchAll(storage_reg)];
-                str_match_count+=ms2.length;
-              }
-              returnFeatures['num_requests_sent']=match_count;
-              returnFeatures['num_set_storage']=str_match_count;
+            if(xhr!=""){
+              let script_reg=/<script\b[^>]*>(.*?)<\/script>/gs;
+              let script_blocks=[...xhr.matchAll(script_reg)];
+              let match_count=0
+              let str_match_count=0;
+              let get_match_count=0;
+              let get_cookie_count=0;
+              let ngram={};
+              let ngramsum=0;
+              let avg_identlen=0;
+              let brackettodot=0;
+              let charperline=0;
+
+              if(script_blocks){
+                for(let script_block of script_blocks){
+                  let script=script_block[1];
+                  
+                  let nodots=0;
+                  let nobrackets=0;
+                  try{
+                    const ast=parse(script);
+                    const traversal=await treewalk(ast);
+                    if('ast' in traversal){
+                      const gramsource=traversal['ast'];
+                      if(gramsource.length>2){
+                        for(let i=2;i<gramsource.length;i++){
+                          let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
+                          if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
+                            ngramsum=ngramsum+1;
+                            if(pattern in ngram){
+                              ngram[pattern]=ngram[pattern]+1;
+                            }
+                            else{
+                              ngram[pattern]=1;
+                            }  
+                          }
+                        }  
+                      }
+                      nodots+=traversal['dot'];
+                      nobrackets+=traversal['bracket'];
+                      let identlen=traversal['avg_ident'];
+                      if(identlen>avg_identlen){
+                        avg_identlen=identlen;
+                      }
+                    }  
+                  }
+                  catch(exception){}
+                  let btod=0;
+                  let brackets=script.split(/\[|\]|\(|\)/).length -1-nobrackets;
+                  let dots=script.split('.').length-1-nodots;
+                  if(dots>0 && brackets >0){
+                    btod=brackets/dots;
+                  }
+                  if(btod>brackettodot){
+                    brackettodot=btod;
+                  }
+                  let lines=script.split('\n').length;
+                  let cperl=0;
+                  if(lines>0){
+                    cperl=script.length/lines;
+                  }
+                  if(cperl>charperline){
+                    charperline=cperl;
+                  }
+  
+                  let ms=[...script.matchAll(requestreg)];
+                  match_count+=ms.length;
+                  let ms2=[...script.matchAll(set_storage_reg)];
+                  str_match_count+=ms2.length;
+                  let ms3=[...script.matchAll(get_storage_reg)];
+                  get_match_count+=ms3.length;
+                  let ms4=[...script.matchAll(get_cookie_reg)];
+                  get_cookie_count+=ms4.length;
+                }
+                for(let i in ngram){
+                  ngram[i]=ngram[i]/ngramsum;
+                } 
+  
+                if('0_0_2' in ngram){
+                  returnFeatures['ng_0_0_2']=ngram['0_0_2'];
+                }
+                if('0_15_15' in ngram){
+                  returnFeatures['ng_0_15_15']=ngram['0_15_15'];
+                }
+                if('2_13_2' in ngram){
+                  returnFeatures['ng_2_13_2']=ngram['2_13_2'];
+                }
+                if('15_0_3' in ngram){
+                  returnFeatures['ng_15_0_3']=ngram['15_0_3'];
+                }
+                if('15_0_15' in ngram){
+                  returnFeatures['ng_15_0_15']=ngram['15_0_15'];
+                }
+                if('15_15_15' in ngram){
+                  returnFeatures['ng_15_15_15']=ngram['15_15_15'];
+                }
+  
+                returnFeatures['num_requests_sent']=match_count;
+                returnFeatures['num_set_storage']=str_match_count;
+                returnFeatures['num_get_storage']=get_match_count;
+                returnFeatures['num_get_cookie']=get_cookie_count;
+                returnFeatures['avg_ident']=avg_identlen;
+                returnFeatures['brackettodot']=brackettodot;
+                returnFeatures['avg_charperline']=charperline;
+              }  
             }
           }
           resolve(returnFeatures);
         } catch (error) {
           reject(error);
         }
+
+      })();
     });
 }
 
@@ -334,8 +583,8 @@ function getRAWREQ(url, meth, header) {
         requrl=requrl+'?de_ad_before=daylight';
     }
     let send_header={};
-    for(let i=0;i<header.length;i++){
-      send_header[header[i].name]=header[i].value;
+    for(let header_elem of header){
+      send_header[header_elem.name]=header_elem.value;
     }
     let my_request;
     if(meth=='HEAD'||meth=="GET"||meth=="POST"){
@@ -353,27 +602,25 @@ function getRAWREQ(url, meth, header) {
       }); 
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       fetch(my_request)
         .then(response => {
-          let res_text=""
           try{
             if(!response.ok){
               throw new Error(response.statusText);
             }
             else{
-              res_text=response.text();
+              return response.text();
             }
           }catch(e){
+            return "";
           }
-          return res_text;
         })
         .then(data => {
           resolve(data);
         })
         .catch(()=>{
         });
-
     });  
 }
 
@@ -417,13 +664,110 @@ chrome.runtime.onInstalled.addListener(async()=>{
       sendResponse({"block":blocked_url_numbers,"ext":ext_time,"inf":inf_time});
       ext_time=[];
       inf_time=[];
+    } 
+    if(request.action=='time'){
+      sendResponse({"ext":ext_time,"inf":inf_time});
+      ext_time=[];
+      inf_time=[];
     }
   });
 
+  flushDynamicRules();
+
+  chrome.storage.sync.get({"toggle":true},function(res){
+    toggle=res.toggle;
+    console.log("Current toggle mode: "+toggle);
+    if(toggle){
+      chrome.declarativeNetRequest.updateEnabledRulesets(
+        {
+          enableRulesetIds:["ruleset_1"]
+        }
+      );
+      console.log("Use ruleset 1 (block)");
+    }
+    else{
+      chrome.declarativeNetRequest.updateEnabledRulesets(
+        {
+          disableRulesetIds:["ruleset_1"]  
+        }
+      );
+      console.log("Use no ruleset");
+    }
+  });
+
+  chrome.storage.onChanged.addListener((changes, namespace)=>{
+    for(let [key, {oldValue, newValue}] of Object.entries(changes)){
+      if(namespace=="sync"){
+        if(key=="toggle"){
+          toggle=newValue;
+          if(toggle){
+            console.log("Turn On");
+            chrome.declarativeNetRequest.updateEnabledRulesets(
+              {
+                enableRulesetIds:["ruleset_1"]
+              }
+            );
+          }
+
+          else{
+            console.log("Turn Off");
+            chrome.declarativeNetRequest.updateEnabledRulesets(
+              {
+                disableRulesetIds:["ruleset_1"]  
+              }
+            );            
+            flushDynamicRules();
+          }
+        }
+      }
+    }
+  });
+}); 
+
+
+function addDynamicRule(option, ruleID, urlFilter){
+  let priority=5;
+
+  chrome.declarativeNetRequest.updateDynamicRules(
+    {
+      addRules:[{
+          "id": ruleID,
+          "priority": priority,
+          "action": {
+            "type": option
+          },
+          "condition":{
+            "urlFilter":urlFilter,
+            "resourceTypes":[
+              "csp_report",
+              "font",
+              "image",
+              "main_frame",
+              "media",
+              "object",
+              "ping",
+              "script",
+              "stylesheet",
+              "sub_frame",
+              "webbundle",
+              "webtransport",
+              "xmlhttprequest",
+              "other"
+            ]
+          }
+        }
+      ],
+      removeRuleIds:[ruleID]
+    }
+  );
+}
+
+function flushDynamicRules(){
   chrome.declarativeNetRequest.getDynamicRules({},function(rules){
+
     let dyn_arr=[];
-    for(let i=0;i<rules.length;i++){
-      dyn_arr.push(rules[i].id);
+    for(let rule of rules){
+      dyn_arr.push(rule.id);
     }
 
     chrome.declarativeNetRequest.updateDynamicRules(
@@ -432,18 +776,17 @@ chrome.runtime.onInstalled.addListener(async()=>{
       },
       function(){
         console.log("Flushed dynamic rules");
-        dynamic_rule_num=5;
+        dynamic_rule_num=start_rule_num;
       }
     );
+      
   });
-
- 
-}); 
+}
 
 let creating; 
 async function setupOffscreenDocument(path) {
   const offscreenUrl = chrome.runtime.getURL(path);
-  const matchedClients = await clients.matchAll();
+  const matchedClients = await self.clients.matchAll();
   for (const client of matchedClients) {
     if (client.url === offscreenUrl) {
       return;

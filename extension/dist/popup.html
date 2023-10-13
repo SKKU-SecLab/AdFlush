@@ -5,22 +5,102 @@
       body {
         display:flex;
         flex-direction: column;
-        width: 250px;
+        width: 280px;
         font-family: Arial, sans-serif;
         color: aliceblue;
         background-color: rgb(0, 0, 54);
         align-items: center;
         justify-content: center;
+        -webkit-user-select: none;
+        -ms-user-select:none;
+        user-select: none;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 25px;
+      }
+      
+      /* Hide default HTML checkbox */
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      
+      /* The slider */
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgb(88, 99, 119);
+        -webkit-transition: .4s;
+        transition: .4s;
+      }
+      
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 21px;
+        width: 21px;
+        left: 2px;
+        bottom: 2px;
+        background-color: aliceblue;
+        -webkit-transition: .4s;
+        transition: .4s;
+      }
+      
+      input:checked + .slider {
+        background-color: #22ca00;
+      }
+      
+      input:focus + .slider {
+        box-shadow: 0 0 1px #22ca00;
+      }
+      
+      input:checked + .slider:before {
+        -webkit-transform: translateX(25px);
+        -ms-transform: translateX(25px);
+        transform: translateX(25px);
+      }
+      
+      /* Rounded sliders */
+      .slider.round {
+        border-radius: 34px;
+      }
+      
+      .slider.round:before {
+        border-radius: 50%;
       }
     </style>
   </head>
-  <body>
-    <h1 align="center" style="font-size:large">AdFlush</h1>
+  <body class="prevent-select">
+    <div style="width:100%; display:flex; flex-direction:row; align-items:center; justify-content:space-between">
+      <div style="display:flex; flex-direction:row; align-items:center; justify-content:start">
+        <label class="switch" >
+          <input id="toggle" type="checkbox">
+          <span class="slider round" id="toggleswitch"></span>
+        </label>
+        <span id="onoffdes" style="margin:5px; font-size:13px">AdFlush ON</span>
+      </div>
+    </div>
+    <hr style="height:1px; width:100%; border:none; background-color:rgba(240, 248, 255, 0.479)">
+    <div>
+      <h1 align="center" style="font-size:20px">AdFlush</h1> 
+    </div>
     <h1 align="center" id="blockertitle">Ads and Trackers<br>blocked</h1>
     <h1 align="center" style="display:flex; align-items:center; justify-content:center; width:80px; height:80px; background-color: rgb(88, 99, 119)" id="showdiv">0</h1>
     <p style="font-size:medium" id="extract">Avg. extraction time:</p>
     <p style="font-size:medium" id="inference">Avg. inference time:</p>
     <p style="font-size:medium">Click anywhere refresh</p>
+    <div id="reslist">
+
+    </div>
     <div id="trigger"></div>
     <script src="popup.js"></script>    
   </body>
