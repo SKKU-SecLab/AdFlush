@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "De-Adlock",
+  "name": "AdFlush",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqwuv1AoiR/mytfnjXfQmz36fL3A00IdTudsJasE2DswI4SqebfZ8NP9xzL/TgiRzOTulcR4AquQbt3ULHuyP4fSfQDztckCA78p5hzcLdgF0uECte6m5pkmb0B9pEZxY/5tJRJ7Ze7JimopXmuWN9jmi0ixHAN1RTGF6HD62aBgYPGhBxqx4pMAJwBfrRLBjrDjtICZbDfoyBy/FYu8QelqpfZ/uVA3w2nZxquSiPim9/y4EMd5k23gcZ2qePwFS5LS0KCdAlPcp5XQelvOrhzYGXAjYO73JCD+qeoVtaNNO7c+QD8hg+l+Nqrnhh+vFiFf73BYUqjXi9wt+1dZQjQIDAQAB",
   "version": "1.0",
   "icons":{
@@ -9,7 +9,7 @@
     "48":"images/icon48.png",
     "128":"images/icon128.png"
   },
-  "description":"The worlds first AI running Anti-Ad & Tracker. Blocks ads and trackers based on AI learned on more than 10K websites.",
+  "description":"The worlds first AI running Anti-Ad & Tracker. Blocks ads and trackers based on AI learned on 83K websites.",
   "declarative_net_request":{
     "rule_resources":[
       {

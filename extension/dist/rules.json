@@ -31,7 +31,7 @@
     "action":{
       "type": "redirect",
       "redirect": {
-        "regexSubstitution": "https://app.requestly.io/delay/400/https:/"
+        "regexSubstitution": "https://app.requestly.io/delay/300/https:/"
       }
     },
     "condition":{

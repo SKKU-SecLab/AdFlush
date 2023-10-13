@@ -8,11 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.sync.get({"toggle":true},function(res){
     if(res.toggle){
       toggle.checked=true;
-      onoffdes.innerText="De-Adlock ON";
+      onoffdes.innerText="AdFlush ON";
     }
     else{
       toggle.checked=false;
-      onoffdes.innerText="De-Adlock OFF";
+      onoffdes.innerText="AdFlush OFF";
     }
   });
 
@@ -20,31 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
     toggle_click()
   });
   trigger.addEventListener('click',function(){
-    getlog();
+    gettimelog();
   });
   cal_stat();
-
-  // document.body.addEventListener("click",()=>{cal_stat();});
-
-  chrome.runtime.sendMessage({action:"saveHistory"});
-
-  const setting_b=document.getElementById("setting");
-  setting_b.addEventListener("click",function(){
-    document.location.href="customlist.html";
-  });
-
-  const history_b=document.getElementById("history");
-  history_b.addEventListener("click",function(){
-    document.location.href="history.html";
-  });
-
-  const report_b=document.getElementById("report");
-  report_b.addEventListener("click",function(){
-    document.location.href="report.html";
-  });
 });
 
-function getlog(){
+function gettimelog(){
   const reslist=document.getElementById('reslist');
   reslist.innerHTML='';
 
@@ -71,12 +52,12 @@ function toggle_click(){
 
   if(!toggle.checked){
     chrome.storage.sync.set({"toggle":true});
-    onoffdes.innerText="De-Adlock ON";
+    onoffdes.innerText="AdFlush ON";
     console.log("On");
   }
   else{
     chrome.storage.sync.set({"toggle":false});
-    onoffdes.innerText="De-Adlock OFF";
+    onoffdes.innerText="AdFlush OFF";
     console.log("Off");
   }
 }

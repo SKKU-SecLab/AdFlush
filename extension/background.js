@@ -1,21 +1,16 @@
 const { getDomain } = require('tldjs');
-const {getSubdomain} =require('tldjs');
-// const {parse} = require('@babel/parser');
 const {parse}=require('meriyah');
 
-
-let dynamic_rule_num=500;
-let allow_rule_num=1;
+let start_rule_num=10;
+let dynamic_rule_num=start_rule_num;
 let blocked_url_numbers=0;
 let messageQueue = [];
 let time_dict={};
 let ext_time=[];
 let inf_time=[];
-let block_history=[];
 let toggle=true;
 
 function treewalk(node){
-  // let start=Date.now();
   return new Promise(function(resolve){
     const ret = [];
     const stack = [node];
@@ -52,7 +47,6 @@ function treewalk(node){
         }
       }
     }
-    // console.log("Treewalk:",Date.now()-start);
     resolve({'ast':ret.reverse(),'avg_ident':idflen/idfcnt, 'dot':dotinstring,'bracket':bracketinstring});
   });
 }
@@ -171,15 +165,11 @@ async function processNextMessage() {
         blocked_url_numbers+=1;
         dynamic_rule_num=dynamic_rule_num%5000;
         if(dynamic_rule_num==0){
-          dynamic_rule_num=500;
-        }
-        let full_domain=getSubdomain(url)+"."+getDomain(url);
-        if(!block_history.includes(full_domain)){
-          block_history.unshift(full_domain);
+          dynamic_rule_num=start_rule_num;
         }
         addDynamicRule("block",dynamic_rule_num, url);        
         dynamic_rule_num+=1;
-        // console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
+        console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
       }
     });
     await messageQueue.shift();
@@ -196,7 +186,6 @@ function addToQueue(url, payload) {
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   async function(details){
-    // console.log(details);
     let url=details['url'];
     let singleslashreg=/https?:\/[^/]/;
     if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")&&toggle){
@@ -242,7 +231,6 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
           dataA.push(features['ng_15_15_15']);
           dataA.push(features['avg_ident']);
           dataA.push(features['avg_charperline']);
-          // console.log(dataA);
           if(localurl in time_dict){
             time_dict[localurl].push(Date.now());
             addToQueue(localurl, dataA);  
@@ -372,25 +360,13 @@ function featureExtract(url, requestHeader){
           };
           returnFeatures['content_policy_type']=policyMap[string_content_type];
           returnFeatures['num_get_cookie']=0;
-          let headers=requestHeader['requestHeaders'];
-          
-          // console.log(headers);
-          for(let h of headers){
-            if(h['name'].includes('ookie')){
-              console.log("Found Cookie!",h);
-              returnFeatures['num_get_cookie']=h['value'].split(';').length+1;
-              console.log(returnFeatures['num_get_cookie']);
-            }
-          }
 
-
-          //DOM features
+          //JavaScript features
           //if js
           let requestreg=/https?:\/\//g;
           let set_storage_reg=/(Storage\.setItem)|(Storage\.[^=;]*=)|(Storage\[[^=;]\]=)/g;
           let get_storage_reg=/(Storage\.getItem)|(Storage\.[^=\s]+)|(Storage\[.*\][^=\s]+)/g;
           let get_cookie_reg=/(cookies?\.get)|(cookies?\.[^=\s]+)|(cookies?\[.*\][^=\s]+)|(getElements?By\w{2,7}\("cookies"\))/g;
-          //let set_cookie_reg=/(cookies?\.set)|(cookies?\.[^=;]*=)|(cookies?\[[^=;]*\]=)|(cookies?=)/g;
 
           returnFeatures['num_requests_sent']=0;
           returnFeatures['num_set_storage']=0;
@@ -466,7 +442,6 @@ function featureExtract(url, requestHeader){
                   }
   
                   returnFeatures['avg_ident']=traversal['avg_ident'];
-                  // console.log("Ngram:",Date.now()-start);
                 }  
               }
               catch(exception){}
@@ -478,6 +453,7 @@ function featureExtract(url, requestHeader){
               returnFeatures['num_requests_sent']=[...js.matchAll(requestreg)].length;
               returnFeatures['num_set_storage']=[...js.matchAll(set_storage_reg)].length;
               returnFeatures['num_get_storage']=[...js.matchAll(get_storage_reg)].length;
+              returnFeatures['num_get_cookie']=[...js.matchAll(get_cookie_reg)].length;
               let lines=js.split('\n').length;
               if(lines>0){
                 returnFeatures['avg_charperline']=js.length/lines;
@@ -487,14 +463,13 @@ function featureExtract(url, requestHeader){
             //if html
           }else if(string_content_type=='xmlhttprequest'||string_content_type=='sub_frame'){
             let xhr=await getRAWREQ(url,method,content_header);
-            // let start=Date.now();
             if(xhr!=""){
               let script_reg=/<script\b[^>]*>(.*?)<\/script>/gs;
               let script_blocks=[...xhr.matchAll(script_reg)];
-              // console.log(xhr,script_blocks);
               let match_count=0
               let str_match_count=0;
               let get_match_count=0;
+              let get_cookie_count=0;
               let ngram={};
               let ngramsum=0;
               let avg_identlen=0;
@@ -508,9 +483,7 @@ function featureExtract(url, requestHeader){
                   let nodots=0;
                   let nobrackets=0;
                   try{
-                    let comments=[];
-                    const ast=parse(script,{onComment:comments});//, {errorRecovery:true});
-                    // console.log(ast);
+                    const ast=parse(script);
                     const traversal=await treewalk(ast);
                     if('ast' in traversal){
                       const gramsource=traversal['ast'];
@@ -561,6 +534,8 @@ function featureExtract(url, requestHeader){
                   str_match_count+=ms2.length;
                   let ms3=[...script.matchAll(get_storage_reg)];
                   get_match_count+=ms3.length;
+                  let ms4=[...script.matchAll(get_cookie_reg)];
+                  get_cookie_count+=ms4.length;
                 }
                 for(let i in ngram){
                   ngram[i]=ngram[i]/ngramsum;
@@ -588,11 +563,10 @@ function featureExtract(url, requestHeader){
                 returnFeatures['num_requests_sent']=match_count;
                 returnFeatures['num_set_storage']=str_match_count;
                 returnFeatures['num_get_storage']=get_match_count;
+                returnFeatures['num_get_cookie']=get_cookie_count;
                 returnFeatures['avg_ident']=avg_identlen;
                 returnFeatures['brackettodot']=brackettodot;
                 returnFeatures['avg_charperline']=charperline;
-                // console.log({'req':match_count,'set':str_match_count,'get':get_match_count,'ident':avg_identlen,'btod':brackettodot,'char':charperline});
-                // console.log("Extract time:",Date.now()-start);
               }  
             }
           }
@@ -606,7 +580,6 @@ function featureExtract(url, requestHeader){
 }
 
 function getRAWREQ(url, meth, header) {
-    // let start=Date.now();
     let requrl=url;
     if(url.includes('?')){
         requrl=requrl+'&de_ad_before=daylight';
@@ -644,12 +617,10 @@ function getRAWREQ(url, meth, header) {
               return response.text();
             }
           }catch(e){
-            // console.log(e);
             return "";
           }
         })
         .then(data => {
-          // console.log("Request time:",Date.now()-start);
           resolve(data);
         })
         .catch(()=>{
@@ -698,12 +669,6 @@ chrome.runtime.onInstalled.addListener(async()=>{
       ext_time=[];
       inf_time=[];
     } 
-    if(request.action=="saveHistory"){
-      if(block_history.length>15){
-        block_history=block_history.slice(0,15);
-      }
-      chrome.storage.session.set({"history":block_history});
-    }
     if(request.action=='time'){
       sendResponse({"ext":ext_time,"inf":inf_time});
       ext_time=[];
@@ -713,7 +678,6 @@ chrome.runtime.onInstalled.addListener(async()=>{
 
   flushDynamicRules();
 
-  //init toggle
   chrome.storage.sync.get({"toggle":true},function(res){
     toggle=res.toggle;
     console.log("Current toggle mode: "+toggle);
@@ -735,43 +699,10 @@ chrome.runtime.onInstalled.addListener(async()=>{
     }
   });
 
-  //init allowlist
-  chrome.storage.sync.get({'allowlist':[]}, function(res){
-    if(res.allowlist.length==0){
-      console.log("Allowlist Init");
-      let default_list=[];
-      default_list.push("comic.naver.com");
-      default_list.push("www.youtube.com");
-      default_list.push("googlevideo.com");
-      default_list.push("www.yahoo.com");
-      
-      chrome.storage.sync.set({'allowlist':default_list});
-    }
-    else{
-      console.log("Allow list:");
-      console.log(res.allowlist);
-
-      if(toggle){
-        setupAllowlist(res.allowlist);
-      }
-    }
-  });
-
-  //add listener for toggle & allowlist
   chrome.storage.onChanged.addListener((changes, namespace)=>{
     for(let [key, {oldValue, newValue}] of Object.entries(changes)){
       if(namespace=="sync"){
-        if(key=="allowlist"){
-          let prev=[];
-          for(let i=0;i<oldValue.length;i++){
-            prev.push(i);
-          }
-          chrome.declarativeNetRequest.updateDynamicRules({removeRuleIds:prev});
-  
-          let allowlist=newValue;
-          setupAllowlist(allowlist);
-        }
-        else if(key=="toggle"){
+        if(key=="toggle"){
           toggle=newValue;
           if(toggle){
             console.log("Turn On");
@@ -780,10 +711,6 @@ chrome.runtime.onInstalled.addListener(async()=>{
                 enableRulesetIds:["ruleset_1"]
               }
             );
-
-            chrome.storage.sync.get({'allowlist':[]}, function(res){
-              setupAllowlist(res.allowlist);
-            });
           }
 
           else{
@@ -792,8 +719,7 @@ chrome.runtime.onInstalled.addListener(async()=>{
               {
                 disableRulesetIds:["ruleset_1"]  
               }
-            );
-            
+            );            
             flushDynamicRules();
           }
         }
@@ -802,20 +728,9 @@ chrome.runtime.onInstalled.addListener(async()=>{
   });
 }); 
 
-function setupAllowlist(a_list){
-  allow_rule_num=1;
-  for(let rule of a_list){
-    addDynamicRule("allow",allow_rule_num, String("||"+rule));
-    allow_rule_num=allow_rule_num+1;
-    console.log(rule+" allowed");
-  }
-}
 
 function addDynamicRule(option, ruleID, urlFilter){
   let priority=5;
-  if(option=="allow"){
-    priority=9;
-  }
 
   chrome.declarativeNetRequest.updateDynamicRules(
     {
@@ -823,7 +738,7 @@ function addDynamicRule(option, ruleID, urlFilter){
           "id": ruleID,
           "priority": priority,
           "action": {
-            "type": "allow"
+            "type": option
           },
           "condition":{
             "urlFilter":urlFilter,
@@ -865,7 +780,7 @@ function flushDynamicRules(){
       },
       function(){
         console.log("Flushed dynamic rules");
-        dynamic_rule_num=500;
+        dynamic_rule_num=start_rule_num;
       }
     );
       
