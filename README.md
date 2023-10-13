@@ -1,6 +1,7 @@
 # Welcome to AdFlush
 
 Document for submitted paper "AdFlush: A Real-World Deployable Machine Learning Solution for Effective Advertisement and Web Tracker Prevention" at Web Conference 2024. 
+
 *AdFlush* is the first advertisement and web tracker blocker Chrome Extension based on Machine Learning prediction. With thorough feature engineering process considering state-of-the-art methodology, *AdFlush* takes advantage of its lightweight and powerful classification ability to detect and block advertisement and web trackers preserving user privacy in the same time. Please refer to our paper for details of the framework and evaluation results of *AdFlush*.
 
 # Abstract
@@ -38,6 +39,7 @@ cd path/to/working/directory
 git clone https://github.com/SKKU-SecLab/AdFlush.git
 cd AdFlush
 ```
+
 
 
 #### Python
