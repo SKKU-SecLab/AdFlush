@@ -1,5 +1,8 @@
 const { getDomain } = require('tldjs');
 const {getSubdomain} =require('tldjs');
+// const {parse} = require('@babel/parser');
+const {parse}=require('meriyah');
+
 
 let dynamic_rule_num=500;
 let allow_rule_num=1;
@@ -10,6 +13,125 @@ let ext_time=[];
 let inf_time=[];
 let block_history=[];
 let toggle=true;
+
+function treewalk(node){
+  // let start=Date.now();
+  return new Promise(function(resolve){
+    const ret = [];
+    const stack = [node];
+    let idflen=0;
+    let idfcnt=0;
+    let dotinstring=0;
+    let bracketinstring=0;
+  
+    while (stack.length > 0) {
+      const current = stack.pop();
+  
+      if (Array.isArray(current)) {
+        for (const child of current) {
+          stack.push(child);
+        }
+      } else if (typeof current === 'object' && current !== null) {
+        for (const key in current) {
+          const child = current[key];
+          if (typeof child === 'object' || Array.isArray(child)) {
+            stack.push(child);
+          }
+        }
+        if ('type' in current) {
+          ret.push(current.type);
+          if(current['type']=='Identifier'){
+            idflen=idflen+current['name'].length;
+            idfcnt=idfcnt+1;
+          }
+        }
+        if ('value' in current){
+          let val=current['value'];
+          dotinstring+=val.split('.').length-1;
+          bracketinstring+=val.split(/\[|\]|\(|\)/).length-1;
+        }
+      }
+    }
+    // console.log("Treewalk:",Date.now()-start);
+    resolve({'ast':ret.reverse(),'avg_ident':idflen/idfcnt, 'dot':dotinstring,'bracket':bracketinstring});
+  });
+}
+
+const ngramdict={
+  'ArrayExpression': 0,
+    'ArrayPattern': 5,
+    'ArrowFunctionExpression': 0,
+    'AssignmentExpression': 0,
+    'AssignmentPattern': 5,
+    'AwaitExpression': 0,
+    'BinaryExpression': 0,
+    'BlockComment': 7,
+    'BlockStatement': 2,
+    'BreakStatement': 2,
+    'CallExpression': 0,
+    'CatchClause': 13,
+    'ChainExpression':0,
+    'ClassBody': 14,
+    'ClassDeclaration': 4,
+    'ClassExpression': 0,
+    'ConditionalExpression': 0,
+    'ContinueStatement': 2,
+    'DebuggerStatement': 2,
+    'DoWhileStatement': 2,
+    'EmptyStatement': 2,
+    'ExportAllDeclaration': 4,
+    'ExportDefaultDeclaration': 4,
+    'ExportNamedDeclaration': 4,
+    'ExportSpecifier': 6,
+    'ExpressionStatement': 2,
+    'ForInStatement': 2,
+    'ForOfStatement': 2,
+    'ForStatement': 2,
+    'FunctionDeclaration': 4,
+    'FunctionExpression': 0,
+    'Identifier': 15,
+    'IfStatement': 2,
+    'Import': 16,
+    'ImportDeclaration': 4,
+    'ImportDefaultSpecifier': 6,
+    'ImportNamespaceSpecifier': 6,
+    'ImportSpecifier': 6,
+    'LabeledStatement': 2,
+    'LineComment': 7,
+    'Literal': 3,
+    'LogicalExpression': 0,
+    'MemberExpression': 0,
+    'MetaProperty': 17,
+    'MethodDefinition': 18,
+    'NewExpression': 0,
+    'ObjectExpression': 0,
+    'ObjectPattern': 5,
+    'Program': 8,
+    'Property': 9,
+    'RestElement': 1,
+    'ReturnStatement': 2,
+    'SequenceExpression': 0,
+    'SpreadElement': 1,
+    'Super': 10,
+    'SwitchCase': 11,
+    'SwitchStatement': 2,
+    'TaggedTemplateExpression': 0,
+    'TemplateElement': 1,
+    'TemplateLiteral': 3,
+    'ThisExpression': 0,
+    'ThrowStatement': 2,
+    'TryStatement': 2,
+    'UnaryExpression': 0,
+    'UpdateExpression': 0,
+    'VariableDeclaration': 4,
+    'VariableDeclarator': 12,
+    'WhileStatement': 2,
+    'WithStatement': 2,
+    'YieldExpression': 0,
+	'StaticBlock' :  4,
+	'ImportExpression' :  0,
+	'ParenthesizedExpression' :  0,
+}
 
 async function processNextMessage() {
   if (messageQueue.length > 0) {
@@ -36,9 +158,10 @@ async function processNextMessage() {
             }
             ext_time.push(e_time);
             inf_time.push(i_time);
-            delete time_dict[url];  
+            delete time_dict[url];
+            // console.log("Extract:",e_time,"Inference:",i_time);
           }catch(e){
-            console.log(e);
+            // console.log(e);
           }
         }
       }catch(e){
@@ -56,7 +179,7 @@ async function processNextMessage() {
         }
         addDynamicRule("block",dynamic_rule_num, url);        
         dynamic_rule_num+=1;
-        console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
+        // console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
       }
     });
     await messageQueue.shift();
@@ -73,6 +196,7 @@ function addToQueue(url, payload) {
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   async function(details){
+    // console.log(details);
     let url=details['url'];
     let singleslashreg=/https?:\/[^/]/;
     if(url.includes("app.requestly.io")&&!url.includes("de_ad_before=daylight")&&toggle){
@@ -86,43 +210,47 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       let temparray=[];
       temparray.push(Date.now());
       time_dict[localurl]=temparray;
+      if('initiator' in details){
+        let features=await featureExtract(localurl, details);
 
-      let features=await featureExtract(localurl, details);
-
-      let dataA=[];
-      try{
-        dataA.push(features['content_policy_type']);
-        dataA.push(features['fqdnEmbedding'][0]);
-        dataA.push(features['fqdnEmbedding'][1]);
-        dataA.push(features['fqdnEmbedding'][12]);
-        dataA.push(features['fqdnEmbedding'][14]);
-        dataA.push(features['fqdnEmbedding'][17]);
-        dataA.push(features['fqdnEmbedding'][23]);
-        dataA.push(features['fqdnEmbedding'][24]);
-        dataA.push(features['fqdnEmbedding'][25]);
-        dataA.push(features['fqdnEmbedding'][26]);
-        dataA.push(features['fqdnEmbedding'][27]);
-        dataA.push(features['fqdnEmbedding'][4]);
-        dataA.push(features['fqdnEmbedding'][6]);
-        dataA.push(features['is_subdomain']);
-        dataA.push(features['is_third_party']);
-        dataA.push(features['keyword_char_present']);
-        dataA.push(features['num_requests_sent']);
-        dataA.push(features['num_set_storage']);
-        dataA.push(features['reqEmbedding'][121]);
-        dataA.push(features['reqEmbedding'][135]);
-        dataA.push(features['reqEmbedding'][179]);
-        dataA.push(features['reqEmbedding'][18]);
-        dataA.push(features['reqEmbedding'][21]);
-        dataA.push(features['reqEmbedding'][22]);
-        dataA.push(features['reqEmbedding'][33]);
-        dataA.push(features['reqEmbedding'][38]);
-        dataA.push(features['reqEmbedding'][91]);
-
-        time_dict[localurl].push(Date.now());
-        addToQueue(localurl, dataA);  
-      }catch(e){
-        console.log(e);
+        let dataA=[];
+        try{
+          dataA.push(features['content_policy_type']);
+          dataA.push(features['url_length']);
+          dataA.push(features['brackettodot']);
+          dataA.push(features['is_third_party']);
+          dataA.push(features['keyword_char_present']);
+          dataA.push(features['num_get_storage']);
+          dataA.push(features['num_set_storage']);
+          dataA.push(features['num_get_cookie']);
+          dataA.push(features['num_requests_sent']);
+          dataA.push(features['reqEmbedding'][33]);
+          dataA.push(features['reqEmbedding'][135]);
+          dataA.push(features['reqEmbedding'][179]);
+          dataA.push(features['fqdnEmbedding'][4]);
+          dataA.push(features['fqdnEmbedding'][13]);
+          dataA.push(features['fqdnEmbedding'][14]);
+          dataA.push(features['fqdnEmbedding'][15]);
+          dataA.push(features['fqdnEmbedding'][23]);
+          dataA.push(features['fqdnEmbedding'][26]);
+          dataA.push(features['fqdnEmbedding'][27]);
+          dataA.push(features['ng_0_0_2']);
+          dataA.push(features['ng_0_15_15']);
+          dataA.push(features['ng_2_13_2']);
+          dataA.push(features['ng_15_0_3']);
+          dataA.push(features['ng_15_0_15']);
+          dataA.push(features['ng_15_15_15']);
+          dataA.push(features['avg_ident']);
+          dataA.push(features['avg_charperline']);
+          // console.log(dataA);
+          if(localurl in time_dict){
+            time_dict[localurl].push(Date.now());
+            addToQueue(localurl, dataA);  
+          }
+        }catch(e){
+          console.log(e);
+        }
+  
       }
     }
   },  { urls: ["<all_urls>"] },
@@ -157,16 +285,16 @@ function featureExtract(url, requestHeader){
               });
             })
           ]);
-          
+        
           //URL features
+          returnFeatures['url_length']=url.length;
           let fqdn=getDomain(domain);
           returnFeatures['is_third_party']=1;
-          returnFeatures['is_subdomain']=0;
           if(fqdn==domain){
             returnFeatures['is_third_party']=0;
-            returnFeatures['is_subdomain']=1;
           }
-
+          returnFeatures['fqdnEmbedding']=Array(30).fill(0);
+          returnFeatures['reqEmbedding']=Array(200).fill(0);
           //source embedding
           const vec_length = 30;
           try{
@@ -225,57 +353,247 @@ function featureExtract(url, requestHeader){
         //HTTP Header features
           let string_content_type=requestHeader.type;
           let policyMap = {
-            main_frame : 0.036026,
-            script : 0.474811,
-            sub_frame : 0.742155,
-            subdocument : 0.742155,
-            image : 0.384715,
-            stylesheet : 0.078971,
-            font : 0.109323,
-            xmlhttprequest : 0.50522,
-            beacon : 0.95697,
-            ping: 0.95697,
-            imageset : 0.017512,
-            csp_report : 0.145729,
-            media : 0.169891,
-            other : 0.033046,
-            websocket : 0.258317,
-            object : 0.080001
+            object: 0.08000072,
+            websocket: 0.25831702,
+            other: 0.033045977,
+            media: 0.16989118,
+            beacon: 0.95697004,
+            ping:.95697004,
+            csp_report: 0.14572865,
+            sub_frame: 0.74215454,
+            subdocument:0.74215454,
+            imageset: 0.01751194,
+            main_frame: 0.03602579,
+            xmlhttprequest: 0.5052196,
+            stylesheet: 0.07897147,
+            script: 0.4748115,
+            image: 0.38471517,
+            font: 0.109323405
           };
           returnFeatures['content_policy_type']=policyMap[string_content_type];
+          returnFeatures['num_get_cookie']=0;
+          let headers=requestHeader['requestHeaders'];
+          
+          // console.log(headers);
+          for(let h of headers){
+            if(h['name'].includes('ookie')){
+              console.log("Found Cookie!",h);
+              returnFeatures['num_get_cookie']=h['value'].split(';').length+1;
+              console.log(returnFeatures['num_get_cookie']);
+            }
+          }
+
 
           //DOM features
           //if js
           let requestreg=/https?:\/\//g;
-          let storage_reg=/(localStorage\.setItem)|(localStorage\..*=)/g;
+          let set_storage_reg=/(Storage\.setItem)|(Storage\.[^=;]*=)|(Storage\[[^=;]\]=)/g;
+          let get_storage_reg=/(Storage\.getItem)|(Storage\.[^=\s]+)|(Storage\[.*\][^=\s]+)/g;
+          let get_cookie_reg=/(cookies?\.get)|(cookies?\.[^=\s]+)|(cookies?\[.*\][^=\s]+)|(getElements?By\w{2,7}\("cookies"\))/g;
+          //let set_cookie_reg=/(cookies?\.set)|(cookies?\.[^=;]*=)|(cookies?\[[^=;]*\]=)|(cookies?=)/g;
+
           returnFeatures['num_requests_sent']=0;
           returnFeatures['num_set_storage']=0;
-
+          returnFeatures['num_get_storage']=0;
+          returnFeatures['brackettodot']=0;
+          returnFeatures['avg_ident']=0;
+          returnFeatures['avg_charperline']=0;
+          returnFeatures['ng_0_0_2']=0;
+          returnFeatures['ng_0_15_15']=0;
+          returnFeatures['ng_2_13_2']=0;
+          returnFeatures['ng_15_0_3']=0;
+          returnFeatures['ng_15_0_15']=0; 
+          returnFeatures['ng_15_15_15']=0;
+          
           if (string_content_type === 'script') {
+            // console.log("Javascript!");
             const js = await getRAWREQ(url,method,content_header);
-            let ms=[...js.matchAll(requestreg)];
-            returnFeatures['num_requests_sent']=ms.length;
+            if(js!=""){
+              // let start=Date.now();
+              let nodots=0;
+              let nobrackets=0;
+              try{
+                let comments=[];
+                const ast=parse(js,{onComment:comments});//, {errorRecovery:true});
+                // console.log(ast);
+                const traversal=await treewalk(ast);
+                // let start=Date.now();
+                if('ast' in traversal){
+                  nodots+=traversal['dot'];
+                  nobrackets+=traversal['bracket'];
+                  for(let comm=0;comm<comments.length;comm++){
+                    nodots+=comments[comm]['value'].split('.').length-1;
+                    nobrackets+=comments[comm]['value'].split(/\[||\]||\(\\\)/).length-1;
+                  }
+                  const gramsource=traversal['ast'];
+                  let ngram={};
+                  let ngramsum=0;
+                  if(gramsource.length>2){
+                    ngramsum=gramsource.length-2;
+                    for(let i=2;i<gramsource.length;i++){
+                      let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
+                      if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
+                        if(pattern in ngram){
+                          ngram[pattern]=ngram[pattern]+1;
+                        }
+                        else{
+                          ngram[pattern]=1;
+                        }  
+                      }
+                    }  
+                  }
+                  for(let i in ngram){
+                    ngram[i]=ngram[i]/ngramsum;
+                  } 
+  
+                  if('0_0_2' in ngram){
+                    returnFeatures['ng_0_0_2']=ngram['0_0_2'];
+                  }
+                  if('0_15_15' in ngram){
+                    returnFeatures['ng_0_15_15']=ngram['0_15_15'];
+                  }
+                  if('2_13_2' in ngram){
+                    returnFeatures['ng_2_13_2']=ngram['2_13_2'];
+                  }
+                  if('15_0_3' in ngram){
+                    returnFeatures['ng_15_0_3']=ngram['15_0_3'];
+                  }
+                  if('15_0_15' in ngram){
+                    returnFeatures['ng_15_0_15']=ngram['15_0_15'];
+                  }
+                  if('15_15_15' in ngram){
+                    returnFeatures['ng_15_15_15']=ngram['15_15_15'];
+                  }
+  
+                  returnFeatures['avg_ident']=traversal['avg_ident'];
+                  // console.log("Ngram:",Date.now()-start);
+                }  
+              }
+              catch(exception){}
+              let brackets=js.split(/\[|\]|\(|\)/).length -1-nobrackets;
+              let dots=js.split('.').length-1-nodots;
+              if(dots>0 && brackets >0){
+                returnFeatures['brackettodot']=brackets/dots;
+              }
+              returnFeatures['num_requests_sent']=[...js.matchAll(requestreg)].length;
+              returnFeatures['num_set_storage']=[...js.matchAll(set_storage_reg)].length;
+              returnFeatures['num_get_storage']=[...js.matchAll(get_storage_reg)].length;
+              let lines=js.split('\n').length;
+              if(lines>0){
+                returnFeatures['avg_charperline']=js.length/lines;
+              }
+            }
 
-            let ms2=[...js.matchAll(storage_reg)];
-            returnFeatures['num_set_storage']=ms2.length;
             //if html
           }else if(string_content_type=='xmlhttprequest'||string_content_type=='sub_frame'){
             let xhr=await getRAWREQ(url,method,content_header);
-            xhr=xhr.replace(/\s/g,"");
-            let script_reg=/<script[^>]*>[^<]*<\/script>/g;
-            let script_blocks=[...xhr.matchAll(script_reg)];
-            let match_count=0
-            let str_match_count=0;
-            if(script_blocks){
-              for(let script_block of script_blocks){
-                let script=script_block[0];
-                let ms=[...script.matchAll(requestreg)];
-                match_count+=ms.length;
-                let ms2=[...script.matchAll(storage_reg)];
-                str_match_count+=ms2.length;
-              }
-              returnFeatures['num_requests_sent']=match_count;
-              returnFeatures['num_set_storage']=str_match_count;
+            // let start=Date.now();
+            if(xhr!=""){
+              let script_reg=/<script\b[^>]*>(.*?)<\/script>/gs;
+              let script_blocks=[...xhr.matchAll(script_reg)];
+              // console.log(xhr,script_blocks);
+              let match_count=0
+              let str_match_count=0;
+              let get_match_count=0;
+              let ngram={};
+              let ngramsum=0;
+              let avg_identlen=0;
+              let brackettodot=0;
+              let charperline=0;
+
+              if(script_blocks){
+                for(let script_block of script_blocks){
+                  let script=script_block[1];
+                  
+                  let nodots=0;
+                  let nobrackets=0;
+                  try{
+                    let comments=[];
+                    const ast=parse(script,{onComment:comments});//, {errorRecovery:true});
+                    // console.log(ast);
+                    const traversal=await treewalk(ast);
+                    if('ast' in traversal){
+                      const gramsource=traversal['ast'];
+                      if(gramsource.length>2){
+                        for(let i=2;i<gramsource.length;i++){
+                          let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
+                          if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
+                            ngramsum=ngramsum+1;
+                            if(pattern in ngram){
+                              ngram[pattern]=ngram[pattern]+1;
+                            }
+                            else{
+                              ngram[pattern]=1;
+                            }  
+                          }
+                        }  
+                      }
+                      nodots+=traversal['dot'];
+                      nobrackets+=traversal['bracket'];
+                      let identlen=traversal['avg_ident'];
+                      if(identlen>avg_identlen){
+                        avg_identlen=identlen;
+                      }
+                    }  
+                  }
+                  catch(exception){}
+                  let btod=0;
+                  let brackets=script.split(/\[|\]|\(|\)/).length -1-nobrackets;
+                  let dots=script.split('.').length-1-nodots;
+                  if(dots>0 && brackets >0){
+                    btod=brackets/dots;
+                  }
+                  if(btod>brackettodot){
+                    brackettodot=btod;
+                  }
+                  let lines=script.split('\n').length;
+                  let cperl=0;
+                  if(lines>0){
+                    cperl=script.length/lines;
+                  }
+                  if(cperl>charperline){
+                    charperline=cperl;
+                  }
+  
+                  let ms=[...script.matchAll(requestreg)];
+                  match_count+=ms.length;
+                  let ms2=[...script.matchAll(set_storage_reg)];
+                  str_match_count+=ms2.length;
+                  let ms3=[...script.matchAll(get_storage_reg)];
+                  get_match_count+=ms3.length;
+                }
+                for(let i in ngram){
+                  ngram[i]=ngram[i]/ngramsum;
+                } 
+  
+                if('0_0_2' in ngram){
+                  returnFeatures['ng_0_0_2']=ngram['0_0_2'];
+                }
+                if('0_15_15' in ngram){
+                  returnFeatures['ng_0_15_15']=ngram['0_15_15'];
+                }
+                if('2_13_2' in ngram){
+                  returnFeatures['ng_2_13_2']=ngram['2_13_2'];
+                }
+                if('15_0_3' in ngram){
+                  returnFeatures['ng_15_0_3']=ngram['15_0_3'];
+                }
+                if('15_0_15' in ngram){
+                  returnFeatures['ng_15_0_15']=ngram['15_0_15'];
+                }
+                if('15_15_15' in ngram){
+                  returnFeatures['ng_15_15_15']=ngram['15_15_15'];
+                }
+  
+                returnFeatures['num_requests_sent']=match_count;
+                returnFeatures['num_set_storage']=str_match_count;
+                returnFeatures['num_get_storage']=get_match_count;
+                returnFeatures['avg_ident']=avg_identlen;
+                returnFeatures['brackettodot']=brackettodot;
+                returnFeatures['avg_charperline']=charperline;
+                // console.log({'req':match_count,'set':str_match_count,'get':get_match_count,'ident':avg_identlen,'btod':brackettodot,'char':charperline});
+                // console.log("Extract time:",Date.now()-start);
+              }  
             }
           }
           resolve(returnFeatures);
@@ -288,6 +606,7 @@ function featureExtract(url, requestHeader){
 }
 
 function getRAWREQ(url, meth, header) {
+    // let start=Date.now();
     let requrl=url;
     if(url.includes('?')){
         requrl=requrl+'&de_ad_before=daylight';
@@ -317,20 +636,20 @@ function getRAWREQ(url, meth, header) {
     return new Promise((resolve) => {
       fetch(my_request)
         .then(response => {
-          let res_text=""
           try{
             if(!response.ok){
               throw new Error(response.statusText);
             }
             else{
-              res_text=response.text();
+              return response.text();
             }
           }catch(e){
-            console.log(response.statusText);
+            // console.log(e);
+            return "";
           }
-          return res_text;
         })
         .then(data => {
+          // console.log("Request time:",Date.now()-start);
           resolve(data);
         })
         .catch(()=>{
@@ -384,6 +703,11 @@ chrome.runtime.onInstalled.addListener(async()=>{
         block_history=block_history.slice(0,15);
       }
       chrome.storage.session.set({"history":block_history});
+    }
+    if(request.action=='time'){
+      sendResponse({"ext":ext_time,"inf":inf_time});
+      ext_time=[];
+      inf_time=[];
     }
   });
 

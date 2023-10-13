@@ -20,6 +20,8 @@
   },
   "description": "",
   "devDependencies": {
-    "eslint": "^8.47.0"
+    "@babel/parser": "^7.23.0",
+    "eslint": "^8.47.0",
+    "meriyah": "^4.3.7"
   }
 }

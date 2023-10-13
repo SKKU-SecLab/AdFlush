@@ -6,7 +6,7 @@
       "type": "allow"
     },
     "condition":{
-      "regexFilter": "^https?://.*[\\?,&](_rq_delayed=true)|(de_ad_before=daylight).*",
+      "regexFilter": "(_rq_delayed=true)|(de_ad_before=daylight)",
       "resourceTypes":[
         "csp_report",
         "font",

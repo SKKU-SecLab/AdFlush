@@ -6,3 +6,4 @@ dataset/trainset.csv
 source/main_test.ipynb
 extension/dist.pem
 extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
+.DS_Store

@@ -2,10 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
   
   const toggle_b=document.getElementById("toggleswitch");
   const toggle=document.getElementById("toggle");
-
+  const trigger=document.getElementById('trigger');
   const onoffdes=document.getElementById("onoffdes");
 
-  chrome.storage.sync.get(["toggle"],function(res){
+  chrome.storage.sync.get({"toggle":true},function(res){
     if(res.toggle){
       toggle.checked=true;
       onoffdes.innerText="De-Adlock ON";
@@ -19,10 +19,12 @@ document.addEventListener("DOMContentLoaded", () => {
   toggle_b.addEventListener("click", function(){
     toggle_click()
   });
-
+  trigger.addEventListener('click',function(){
+    getlog();
+  });
   cal_stat();
 
-  document.body.addEventListener("click",()=>{cal_stat();});
+  // document.body.addEventListener("click",()=>{cal_stat();});
 
   chrome.runtime.sendMessage({action:"saveHistory"});
 
@@ -42,7 +44,26 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+function getlog(){
+  const reslist=document.getElementById('reslist');
+  reslist.innerHTML='';
 
+  chrome.runtime.sendMessage({ action: "time" }, (response) => {
+    if(response){
+      let len=response['ext'].length;
+      if(len>0){
+        for(let i=0;i<len;i++){
+          let ext_time=response['ext'][i];
+          let inf_time=response['inf'][i];
+          const li = document.createElement("li");
+          let text=String(ext_time)+','+String(inf_time);
+          li.textContent=text;
+          reslist.appendChild(li);
+        }
+      }  
+    }
+  });
+}
 
 function toggle_click(){
   const toggle=document.getElementById("toggle");
