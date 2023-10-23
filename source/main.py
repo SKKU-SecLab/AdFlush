@@ -73,22 +73,24 @@ def prepare(dataset, modeltype):
     
     if dataset=='train':
         print("Loading train dataset...")
-        dataframe=pd.read_csv("dataset/trainset.csv", index_col=0)
+        dataframe=pd.read_csv("dataset/AdFlush_train.csv", index_col=0)
         is_mutated=False
         
     elif dataset=='test':
         print("Loading test dataset...")
-        dataframe=pd.read_csv("dataset/testset.csv", index_col=0)
+        dataframe=pd.read_csv("dataset/AdFlush_test.csv", index_col=0)
         is_mutated=False
         
     elif dataset=='gan':
         print("Loading GAN dataset...")
         dataframe=pd.read_csv("dataset/GAN_mutated_AdFlush.csv", index_col=0)
         is_mutated=True
-    elif dataset=='gan_custom':
-        print("Loading custom GAN dataset...")
-        dataframe=pd.read_csv("dataset/GAN_custom_mutated_AdFlush.csv", index_col=0)
+    elif dataset=='custom_gan':
+        print("Loading customized GAN dataset...")
+        dataframe=pd.read_csv("dataset/custom_GAN_mutated_adflush.csv", index_col=0)
         is_mutated=True
+        
+        
     else:
         print("Unavailable dataset...")
         return
@@ -116,7 +118,7 @@ def prepare(dataset, modeltype):
 def main(program, args):
     #arguements
     parser=argparse.ArgumentParser(description="Evaluate AdFlush")
-    parser.add_argument('--dataset',type=str, default='test',choices=['train','test','gan','gan_custom'], help='Dataset to evaluate AdFlush on.')
+    parser.add_argument('--dataset',type=str, default='test',choices=['train','test','gan','custom_gan'], help='Dataset to evaluate AdFlush on.')
     parser.add_argument('--modeltype',type=str, default='mojo',choices=['mojo','onnx'], help='Model type to use AdFlush.')
     a=parser.parse_args(args)
     prepare(a.dataset, a.modeltype)

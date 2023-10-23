@@ -346,7 +346,7 @@ function featureExtract(url, requestHeader){
             other: 0.033045977,
             media: 0.16989118,
             beacon: 0.95697004,
-            ping:.95697004,
+            ping:0.95697004,
             csp_report: 0.14572865,
             sub_frame: 0.74215454,
             subdocument:0.74215454,

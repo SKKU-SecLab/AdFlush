@@ -39,12 +39,13 @@ def prepare_training(feature):
        'descendant_of_eval_or_function',
        'ascendant_script_has_eval_or_function',
        'ascendant_script_has_fp_keyword', 'ascendant_script_length']
-    adflush_features=['content_policy_type', 'fqdn_0', 'fqdn_1', 'fqdn_12', 'fqdn_14', 
-                    'fqdn_17', 'fqdn_23', 'fqdn_24', 'fqdn_25', 'fqdn_26', 
-                    'fqdn_27', 'fqdn_4', 'fqdn_6', 'is_subdomain', 'is_third_party', 
-                    'keyword_char_present', 'num_requests_sent', 'num_set_storage', 'req_url_121', 'req_url_135', 
-                    'req_url_179', 'req_url_18', 'req_url_21', 'req_url_22', 'req_url_33', 
-                    'req_url_38', 'req_url_91']
+    adflush_features=['content_policy_type', 'url_length', 'brackettodot', 'is_third_party',
+                    'keyword_char_present', 'num_get_storage', 'num_set_storage',
+                    'num_get_cookie', 'num_requests_sent', 'req_url_33', 'req_url_135',
+                    'req_url_179', 'fqdn_4', 'fqdn_13', 'fqdn_14', 'fqdn_15', 'fqdn_23',
+                    'fqdn_26', 'fqdn_27', 'ng_0_0_2', 'ng_0_15_15', 'ng_2_13_2',
+                    'ng_15_0_3', 'ng_15_0_15', 'ng_15_15_15', 'avg_ident',
+                    'avg_charperline']
 
     if feature=='adflush':
         feature_set=adflush_features
@@ -55,15 +56,13 @@ def prepare_training(feature):
     else:
         return
     
-    train=pd.read_csv('dataset/trainset.csv',index_col=0)
-    test=pd.read_csv('dataset/testset.csv',index_col=0)
-    train_df=train[feature_set]
-    target_df=pd.DataFrame(train['label'])
-    test_df=test[feature_set]
-    train_GAN(train_df, target_df, test_df,feature)
+    dataset=pd.read_csv('dataset/AdFlush_test.csv',index_col=0)
+    train_df=dataset[feature_set]
+    target_df=pd.DataFrame(dataset['label'])
+    train_GAN(train_df, target_df,feature)
 
 
-def train_GAN(train_df, target_df, test_df,feature):
+def train_GAN(train_df, target_df,feature):
     mut_train, mut_target = GANGenerator(gen_x_times=1.1, cat_cols=None,
             bot_filter_quantile=0.001, top_filter_quantile=0.999, is_post_process=True,
             adversarial_model_params={
@@ -79,10 +78,10 @@ def train_GAN(train_df, target_df, test_df,feature):
                 "patience": 25, 
                 "epochs" : 50,
             }).generate_data_pipe(train_df, target_df,
-                                            test_df, deep_copy=True, only_adversarial=False, use_adversarial=True)
+                                            train_df, deep_copy=True, only_adversarial=False, use_adversarial=True)
             
     mut_train['label']=mut_target.values
-    mut_train.to_csv('dataset/GAN_custom_mutated_'+feature+'.csv')
+    mut_train.to_csv('dataset/custom_GAN_mutated_'+feature+'.csv')
     
 def main(program, args):
     parser=argparse.ArgumentParser(description="Generate GAN dataset")

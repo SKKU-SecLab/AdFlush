@@ -1,0 +1,18 @@
+{
+    "object": 0.08000072,
+    "websocket": 0.25831702,
+    "other": 0.033045977,
+    "media": 0.16989118,
+    "beacon": 0.95697004,
+    "ping":0.95697004,
+    "csp_report": 0.14572865,
+    "sub_frame": 0.74215454,
+    "subdocument":0.74215454,
+    "imageset": 0.01751194,
+    "main_frame": 0.03602579,
+    "xmlhttprequest": 0.5052196,
+    "stylesheet": 0.07897147,
+    "script": 0.4748115,
+    "image": 0.38471517,
+    "font": 0.109323405
+  }
