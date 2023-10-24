@@ -57,18 +57,18 @@ def char2vec_pretrained(url, _isrequestURL):
     # }
     char2vecDict={}
     if _isrequestURL:
-        with open('reqwordvec.json','r') as vdict:
+        with open('json/reqwordvec.json','r') as vdict:
             char2vecDict=json.loads(vdict.read())
             
     else:    
-        with open('fqdnwordvec.json','r') as vdict:
+        with open('json/fqdnwordvec.json','r') as vdict:
             char2vecDict=json.loads(vdict.read())
     vec=np.array([char2vecDict[c] for c in url]).mean(axis=0)
     return vec
 
 def content_policy_type_encoding(content_policy_type):
     # Input: { content_policy_type: value to target encode with pretrained dictionary }
-    with open('content_type_dict','r') as vdict:
+    with open('json/content_type_dict.json','r') as vdict:
         content_dict=json.loads(vdict.read())
         return content_dict[content_policy_type]
     
@@ -169,7 +169,7 @@ def ngram_encodings(file_name, _isHTML):
                         parseresult=json.loads(astf.read())
                         ast=parseresult['ast']
                         gram_source=treewalk(ast)
-                        with open('ngram_token_dict.json','r') as asttoken:
+                        with open('json/ngram_token_dict.json','r') as asttoken:
                             ast_token_dict=json.loads(asttoken.read())
                             idx_gram_src=[ast_token_dict[t] for t in gram_source]
                             ngram_len=len(idx_gram_src)-NGRAM+1
@@ -253,7 +253,7 @@ def ngram_encodings(file_name, _isHTML):
                                 parseresult=json.loads(astf.read())
                                 ast=parseresult['ast']
                                 gram_source=treewalk(ast)
-                                with open('ngram_token_dict.json','r') as asttoken:
+                                with open('json/ngram_token_dict.json','r') as asttoken:
                                     ast_token_dict=json.loads(asttoken.read())
                                     idx_gram_src=[ast_token_dict[t] for t in gram_source]
                                     ngram_len=len(idx_gram_src)-NGRAM+1
