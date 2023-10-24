@@ -11,3 +11,4 @@ extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 .git
 .github/workflows
 .vscode
+source/node_modules
