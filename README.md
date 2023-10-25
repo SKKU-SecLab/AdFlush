@@ -146,6 +146,7 @@ npx webpack --config webpack.config.js
 <hr>
 
 ## Dataset
+
 We opensource our *AdFlush* dataset used within our study. Our dataset consists of top 10K web pages from Tranco list, crawled at the date April 4, 2023. We divided our dataset for training processes and evaluation by 8:2 ratio. We also provide the dataset obtained with our trained GAN and used in robustness evaluation. These are available in `dataset` directory. 
 
 Our dataset looks like as below. Note that the indices derive from splitting a full dataset into train/test thus are unique between both train and test.  
@@ -165,8 +166,11 @@ Our dataset looks like as below. Note that the indices derive from splitting a f
 Columns
 
 > - `(index)` : Index of corresponding sample. Values are unique across both `trainset.csv` and `testset.csv`.  
-> - `visit_id` : Visit ID obtained upon crawling via <a href="https://github.com/openwpm/OpenWPM">OpenWPM</a>.  
+> - `visit_id` : Visit ID obtained upon crawling via <a href="https://github.com/sandrasiby/OpenWPM/tree/webgraph">OpenWPM</a>.  
 > - `<features used in WebGraph, AdGraph, WTAGraph>` : Aggregated columns of features used in the three studies are available in our dataset. The full list of features in order as in our dataset is available in `dataset/features.txt`.  
 > - `req_url_[0-199]` : Character embeddings of request URL implemented in *AdFlush*. The values are obtainable by mapping each character in the URLs of request to our character dictionary `reqwordvec.json` trained upon our trainset, and then average the values.  
 > - `fqdn_[0-29]` : Character embeddings of source URL implemented in *AdFlush*. The values are obtainable by mapping each character in the URLs of request to our character dictionary `fqdnwordvec.json` trained upon our trainset, and then average the values.  
-> - `label` : Truth value of the corresponding sample. 1 indicates advertisement or web tracker sample, and 0 indicates as benign sample.  
+> - `label` : Truth value of the corresponding sample. 1 indicates advertisement or web tracker sample, and 0 indicates as benign sample.
+
+
+(Optional) We collected our dataset from OpenWPM. To run all tasks (Graph building, Feature extraction or Classification) on WebGraph and AdGraph, the crawl data used is collected using a custom version of [OpenWPM](https://github.com/sandrasiby/OpenWPM/tree/webgraph). Follow the instructions [here](https://github.com/sandrasiby/OpenWPM/tree/webgraph#readme) to setup OpenWPM in your environment.
