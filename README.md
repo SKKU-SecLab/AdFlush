@@ -10,7 +10,7 @@ Ad blocking and web tracking prevention tools are widely used, but traditional f
 The demo of exploring real-life web sites and detecting, blocking advertisements and trackers using *AdFlush* is available <a href="https://www.youtube.com/watch?v=dzdfqpiCjKg">here</a>.
 
 
-[<img src="http://img.youtube.com/vi/dzdfqpiCjKg/0.jpg" width="300" height="200"
+[<img src="http://img.youtube.com/vi/dzdfqpiCjKg/0.jpg" width="600" height="400"
 />](https://youtu.be/dzdfqpiCjKg)
 
 <hr>
