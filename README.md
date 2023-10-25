@@ -11,7 +11,7 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 
 
 [<div align="center"><img src="http://img.youtube.com/vi/dzdfqpiCjKg/0.jpg" width="300" height="200"
-/></div>](https://youtu.be/dzdfqpiCjKg)
+/>](https://youtu.be/dzdfqpiCjKg)</div>
 
 <hr>
 
