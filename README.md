@@ -51,7 +51,7 @@ conda activate adflush
 In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. You can download Java as the same version as tested from <a href="https://www.oracle.com/kr/java/technologies/javase/javase8u211-later-archive-downloads.html">here</a>. 
 
 #### Prepare Dataset
-Download the files(*testset.csv*, *trainset.csv*) from <a href="https://zenodo.org/record/8091819">here</a> and replace the *\*.placeholder* files respectively in */dataset* folder. 
+Download the .csv file to *./dataset* folder from <a href="https://zenodo.org/records/10039834">here</a>.
 
 <hr>
 
@@ -67,13 +67,13 @@ Output Example
 > Running...  
 > Inference time elapsed:  0.24999642372131348 for  166032  samples.  
 > Performace Metrics:  
->    Accuracy:  0.9788293822877517  
->    Precision:  0.9790394479726429  
->    Recall:  0.9676791453533113  
->    F1:  0.973326149479803  
->    ROC-AUC:  0.976957988057724  
->    False Negative Rate: 0.0323208546466887  
->    False Positive Rate: 0.01376316923786325  
+>    Accuracy : 0.9863640743952973 
+>    Precision : 0.9928697928697928 
+>    Recall : 0.9728245288428168 
+>    F1 : 0.9827449545759405 
+>    ROC-AUC:  0.9840916717931744
+>    False Negative Rate: 0.027175471157183165
+>    False Positive Rate: 0.004641185256468088
 
 - We must note that the results of the source code may differ from the results in our paper. The ONNX convertion involves compatibility within multiple environments, nessecary for browser extension implementation. However in this way the limit of Opsets in conversion acts as an upperbound in model performance by degrading precise floating point computation. 
 
