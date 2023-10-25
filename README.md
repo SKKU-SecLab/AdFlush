@@ -8,6 +8,11 @@ Document for submitted paper "AdFlush: A Real-World Deployable Machine Learning 
 Ad blocking and web tracking prevention tools are widely used, but traditional filter list-based methods struggle to cope with web content manipulation. Machine learning-based approaches have been proposed to address these limitations, but they have primarily focused on improving detection accuracy at the expense of practical considerations such as deployment overhead. In this paper, we present AdFlush, a lightweight machine learning model for ad blocking and web tracking prevention that is practically designed for the Chrome browser. To develop AdFlush, we first evaluated the effectiveness of 883 features, including 350 existing and 533 new features, and ultimately identified 27 key features that achieve optimal detection performance. We then evaluated AdFlush using a dataset of 10,000 real-world websites, achieving an F1 score of 0.98, which outperforms state-of-the-art models such as AdGraph (F1 score: 0.93), WebGraph (F1 score: 0.90), and WTAgraph (F1 score: 0.84). Importantly, AdFlush also exhibits a significantly reduced computational footprint, requiring 56% less CPU and 80% less memory than AdGraph. We also evaluated the robustness of AdFlush against adversarial manipulation, such as URL manipulation and JavaScript obfuscation. Our experimental results show that AdFlush exhibits superior robustness with F1 scores of 0.89–0.98, outperforming AdGraph and WebGraph, which achieved F1 scores of 0.81–0.87 against adversarial samples. To demonstrate the real-world applicability of AdFlush, we have implemented it as a Chrome browser extension and made it publicly available. We also conducted a six-month longitudinal study, which showed that AdFlush maintained a high F1 score above 0.97 without retraining, demonstrating its effectiveness. Additionally, AdFlush detected 642 URLs across 108 domains that were missed by commercial filter lists, which we reported to filter list providers.
 
 The demo of exploring real-life web sites and detecting, blocking advertisements and trackers using *AdFlush* is available <a href="https://www.youtube.com/watch?v=dzdfqpiCjKg">here</a>.
+
+
+[<center><img src="http://img.youtube.com/vi/dzdfqpiCjKg/0.jpg" width="300" height="200"
+/></center>](https://youtu.be/dzdfqpiCjKg)
+
 <hr>
 
 ## Within Python or Conda
