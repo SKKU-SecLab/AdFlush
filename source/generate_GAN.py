@@ -40,12 +40,12 @@ def prepare_training(feature):
        'ascendant_script_has_eval_or_function',
        'ascendant_script_has_fp_keyword', 'ascendant_script_length']
     adflush_features=['content_policy_type', 'url_length', 'brackettodot', 'is_third_party',
-                    'keyword_char_present', 'num_get_storage', 'num_set_storage',
-                    'num_get_cookie', 'num_requests_sent', 'req_url_33', 'req_url_135',
-                    'req_url_179', 'fqdn_4', 'fqdn_13', 'fqdn_14', 'fqdn_15', 'fqdn_23',
-                    'fqdn_26', 'fqdn_27', 'ng_0_0_2', 'ng_0_15_15', 'ng_2_13_2',
-                    'ng_15_0_3', 'ng_15_0_15', 'ng_15_15_15', 'avg_ident',
-                    'avg_charperline']
+        'keyword_char_present', 'num_get_storage', 'num_set_storage',
+        'num_get_cookie', 'num_requests_sent', 'req_url_33', 'req_url_135',
+        'req_url_179', 'fqdn_4', 'fqdn_13', 'fqdn_14', 'fqdn_15', 'fqdn_23',
+        'fqdn_26', 'fqdn_27', 'ng_0_0_2', 'ng_0_15_15', 'ng_2_13_2',
+        'ng_15_0_3', 'ng_15_0_15', 'ng_15_15_15', 'avg_ident',
+        'avg_charperline']
 
     if feature=='adflush':
         feature_set=adflush_features
