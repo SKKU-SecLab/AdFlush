@@ -146,7 +146,7 @@ npm install
 
 2. When you are done applying modifications to *AdFlush*, un the source code below to pack the source codes with appropriate npm packages. 
 ```bash
-npx webpack --config webpack.config.js
+npx webpack --config=webpack.config.js
 ```
 
 3. Press the refresh button to reload *AdFlush* within your chrome extension and you are ready to run the modified *AdFlush*.  
