@@ -15,14 +15,14 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 
 <hr>
 
-# Within Python Environment
+# 1. Within Python Environment
 
-## Prerequisites
+## 1. Prerequisites
 This study has been run and tested in *Python==3.10.11*, in both following environments:
 - *javac=17.0.7*, *Windows 10 Pro 22H2*
 - *openjdk==11.0.17*, *Linux 4.15.0-197-generic (bionic 18.04)*
 
-H2O requires 64-bit JDK of versions over 7. 
+H2O requires 64-bit JDK of versions over 7. You can download Java as the same version as tested from <a href="https://www.oracle.com/kr/java/technologies/javase/javase8u211-later-archive-downloads.html">here</a>. 
 
 ### 1.  Clone Repository
 Setup the directory structure as it is the same as this GitHub repository.  
@@ -52,60 +52,47 @@ pip3 install -r requirements.txt
 ```
 
 ### 3. Prepare Dataset
-Download the following .csv files to *./dataset* folder from <a href="https://zenodo.org/records/10039834">here</a> to replace the *.placeholder* files. 
+Download the following .csv files to `./dataset` folder from <a href="https://zenodo.org/records/10039834">here</a> to replace the `.placeholder` files. 
 ```bash
 AdFlush_test.csv
 AdFlush_train.csv
 all_df_883_test.csv
 all_df_883_train.csv
 ```
-We publically open additional datasets not required in the following source codes but involved with or resulting from our study in *Dataset.tar.gz*. 
+We publically open additional datasets not required in the following source codes but involved with or resulting from our study in `Dataset.tar.gz`. 
 
 <hr>
 
-## Feature Enginnering Framework of AdFlush
+## 2. Feature Enginnering Framework of AdFlush
 
-
-
-#### H2O AutoML
-In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. You can download Java as the same version as tested from <a href="https://www.oracle.com/kr/java/technologies/javase/javase8u211-later-archive-downloads.html">here</a>. 
-
+Open `./source/AdFlush_feature_engineering.ipynb` and follow the steps to reproduce the results of AdFlush's feature engineering framework. The contents are:
+1. Point-Biserial Correlation
+2. RFECV(Recursive Feature Elimination with Cross-Validation)
+3. Pearson & Spearman
+4. RFI-PI mean Importance
 
 <hr>
 
-### How to evaluate *AdFlush*
-Run the following source code within *AdFlush*'s directory to evaluate *AdFlush* within python based environment. We provide accuracy, precision, recall, F1-score, attack success rate (for GAN mutated dataset), false positive rate, false negative rate metrics for the given datasets. 
-```bash
-python3 source/main.py --dataset test --modeltype onnx
-```
-Output Example
+## 3. Modeling AdFlush
 
-> Loading test dataset...  
-> Open ONNX session  
-> Running...  
-> Inference time elapsed:  0.24999642372131348 for  166032  samples.  
-> Performace Metrics:  
->    Accuracy : 0.9863640743952973 
->    Precision : 0.9928697928697928 
->    Recall : 0.9728245288428168 
->    F1 : 0.9827449545759405 
->    ROC-AUC:  0.9840916717931744
->    False Negative Rate: 0.027175471157183165
->    False Positive Rate: 0.004641185256468088
+Open `./source/AdFlush_model.ipynb` and follow the steps to reproduce the results of evaluating AdFlush upon various datasets. The contents are:
+1. Testing AdFlush ONNX
+2. Training and Testing AdFlush H2O Mojo
+    1. Making a custom AdFlush
+        1. Training custom AdFlush
+        2. Convert AdFlush H2O Mojo to ONNX
+    2. Testing AdFlush H2O Mojo
+    3. Explainable AI with AdFlush H2O Mojo
+    4. Longitudinal Experiment
 
 - We must note that the results of the source code may differ from the results in our paper. The ONNX convertion involves compatibility within multiple environments, nessecary for browser extension implementation. However in this way the limit of Opsets in conversion acts as an upperbound in model performance by degrading precise floating point computation. 
 
-Arguements
-
-> - `--dataset` : the dataset to use in evaluation. Available values are `train`, `test`, and `gan`.  
-> - `--model` : the model extract type to use in evaluation. Available values are `mojo` and `onnx`.  
-
 <hr>
 
-### Generate GAN mutated datasets
+## 4. Generate GAN mutated datasets
 Run the following source code within *AdFlush*'s directory to train a new GAN as the robustness evaluation of *AdFlush* and create a custom mutated dataset. You can vary the parameters and also use the dataset to evaluate performance of *AdFlush*. We provide `generate_GAN.py` to train GAN upon desired hyperparameters. 
 
-Modify the hyperparameters in `source/generate_GAN.py` and run the code below to train GAN and build a mutated dataset. 
+Modify the hyperparameters in `./source/generate_GAN.py` and run the code below to train GAN and build a mutated dataset. 
 
 ```bash
 python3 source/generate_GAN.py --feature adflush
@@ -119,7 +106,16 @@ The output of the code above will generate a mutated dataset from the newly trai
 
 <hr>
 
-## Within Chrome Extension
+## 5. Encodings used in AdFlush
+The details of encodings used in AdFlush are implemented in `./source/encodings.py`.
+- `trainCharEmbeddings`: Train a custom character embedding dictionary using <a href=https://radimrehurek.com/gensim/models/word2vec.html>Word2Vec</a>. 
+- `char2vec_pretrained`: Apply Word2Vec with AdFlush's pretrained character embedding dictionaries.
+- `extract_JS_Features`: Extract JavaScript features as implemented in AdFlush. This contains *n-grams* of JavaScript's Abstract Syntax Tree. 
+    - input: file name of HTML or JavaScript source code. Place the file within `./source/processing/` directory for proper use.
+
+<hr>
+
+# 2. Within Chrome Extension
 The following browser extension is developed in `npm==9.5.1`.
 
 ### Setting Up *AdFlush*
@@ -158,32 +154,15 @@ npx webpack --config webpack.config.js
 
 <hr>
 
-## Dataset
+# 3. Dataset
 
-We opensource our *AdFlush* dataset used within our study. Our dataset consists of top 10K web pages from Tranco list, crawled at the date April 4, 2023. We divided our dataset for training processes and evaluation by 8:2 ratio. We also provide the dataset obtained with our trained GAN and used in robustness evaluation. These are available in `dataset` directory. 
+We opensource our *AdFlush* dataset used within our study. Our dataset consists of top 10K web pages from Tranco list, crawled at the date April 4, 2023. We divided our dataset for training processes and evaluation by 8:2 ratio. We also provide the datasets obtained with our trained GAN or several JavaScript obfuscation and used in robustness evaluation. These are available in `./dataset` directory. 
+- `AdFlush_train.csv`: Train set of AdFlush
+- `AdFlush_test.csv`: Test set of AdFlush
+- `all_df_883_`: Dataset collected by extracting all possible 883 features
+- `GAN_mutated_` : GAN mutated test sets for each method
+- `JS_obfuscated_`: JavaScript features obtained by each obfuscation method for AdFlush
 
-Our dataset looks like as below. Note that the indices derive from splitting a full dataset into train/test thus are unique between both train and test.  
-| (index) | visit_id     | name                                              | content_policy_type | url_length | is_subdomain | is_valid_qs | ... | label |
-|---------|--------------|---------------------------------------------------|---------------------|------------|--------------|-------------|-----|-------|
-| 0       | 1.700576e+11 | https://rbl.efnetrbl.org/                         | 0.036026            | 20         | 1            | 1           |     | 0     |
-| 1       | 1.700576e+11 | https://rbl.efnetrbl.org/                         | 0.036026            | 25         | 1            | 1           | ... | 0     |
-| 2       | 1.700576e+11 | https://www.google.com/recaptcha/api.js           | 0.474811            | 39         | 0            | 1           | ... | 0     |
-| 3       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
-| 4       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
-| 5       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
-| 6       | 1.700576e+11 | https://www.gstatic.com/recaptcha/releases/NZr... | 0.474811            | 84         | 0            | 1           | ... | 0     |
-| 8       | 1.700576e+11 | https://www.gstatic.com/recaptcha/api2/logo_48... | 0.384715            | 50         | 0            | 1           | ... | 0     |
-| ...     | ...          | ...                                               | ...                 | ...        | ...          | ...         | ... | ...   |
-| 830,159 | 9.004904e+15 | https://www.ziffdavis.com/s/zd/fonts/Helvetica... | 0.109323            | 64         | 1            | 1           | ... | 0     |  
-
-Columns
-
-> - `(index)` : Index of corresponding sample. Values are unique across both `trainset.csv` and `testset.csv`.  
-> - `visit_id` : Visit ID obtained upon crawling via <a href="https://github.com/sandrasiby/OpenWPM/tree/webgraph">OpenWPM</a>.  
-> - `<features used in WebGraph, AdGraph, WTAGraph>` : Aggregated columns of features used in the three studies are available in our dataset. The full list of features in order as in our dataset is available in `dataset/features.txt`.  
-> - `req_url_[0-199]` : Character embeddings of request URL implemented in *AdFlush*. The values are obtainable by mapping each character in the URLs of request to our character dictionary `reqwordvec.json` trained upon our trainset, and then average the values.  
-> - `fqdn_[0-29]` : Character embeddings of source URL implemented in *AdFlush*. The values are obtainable by mapping each character in the URLs of request to our character dictionary `fqdnwordvec.json` trained upon our trainset, and then average the values.  
-> - `label` : Truth value of the corresponding sample. 1 indicates advertisement or web tracker sample, and 0 indicates as benign sample.
-
+Further more, we publically open the datasets used to inference the existing methods used to compare with AdFlush within our <a href="https://zenodo.org/records/10039834">Zenedo</a> within `Dataset.tar.gz`. 
 
 (Optional) We collected our dataset from OpenWPM. To run all tasks (Graph building, Feature extraction or Classification) on WebGraph and AdGraph, the crawl data used is collected using a custom version of [OpenWPM](https://github.com/sandrasiby/OpenWPM/tree/webgraph). Follow the instructions [here](https://github.com/sandrasiby/OpenWPM/tree/webgraph#readme) to setup OpenWPM in your environment.

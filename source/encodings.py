@@ -139,7 +139,7 @@ def treewalk_featext(node):
         return depth, breadth, idlen, idcount
 
 
-def ngram_encodings(file_name, _isHTML):
+def extract_JS_Features(file_name, _isHTML):
     # Input: source_code= File name(without extension) of javascript or HTML source code to extract JavaScript features
     # Example of source code is the content of /processing/sample.js
     # Output: Extracted JavaScript features as below
