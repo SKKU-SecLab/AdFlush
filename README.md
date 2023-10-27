@@ -1,4 +1,4 @@
-# Welcome to AdFlush
+# Welcome to *AdFlush*
 
 Document for submitted paper *AdFlush: A Real-World Deployable Machine Learning Solution for Effective Advertisement and Web Tracker Prevention* at Web Conference 2024. 
 
