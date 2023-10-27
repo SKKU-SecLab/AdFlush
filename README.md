@@ -52,7 +52,7 @@ pip3 install -r requirements.txt
 ```
 
 ### 3. Prepare Dataset
-Download the following .csv files to `./dataset` folder from <a href="https://zenodo.org/records/10039834">here</a> to replace the `.placeholder` files. 
+Download the following .csv files to `./dataset` folder from <a href="https://zenodo.org/records/10047813">here</a> to replace the `.placeholder` files. 
 ```bash
 AdFlush_test.csv
 AdFlush_train.csv
@@ -163,6 +163,6 @@ We opensource our *AdFlush* dataset used within our study. Our dataset consists 
 - `GAN_mutated_` : GAN mutated test sets for each method
 - `JS_obfuscated_`: JavaScript features obtained by each obfuscation method for *AdFlush*
 
-Further more, we publically open the datasets used to inference the existing methods used to compare with *AdFlush* within our <a href="https://zenodo.org/records/10039834">Zenedo</a> within `Dataset.tar.gz`. 
+Further more, we publically open the datasets used to inference the existing methods used to compare with *AdFlush* within our <a href="https://zenodo.org/records/10047813">Zenedo</a> within `Dataset.tar.gz`. 
 
 (Optional) We collected our dataset from OpenWPM. To run all tasks (Graph building, Feature extraction or Classification) on WebGraph and AdGraph, the crawl data used is collected using a custom version of [OpenWPM](https://github.com/sandrasiby/OpenWPM/tree/webgraph). Follow the instructions [here](https://github.com/sandrasiby/OpenWPM/tree/webgraph#readme) to setup OpenWPM in your environment.
