@@ -71,6 +71,7 @@ Open `./source/AdFlush_feature_engineering.ipynb` and follow the steps to reprod
 3. Pearson & Spearman
 4. RFI-PI mean Importance
 
+- Note: To run the Jupyter Notebook with *adflush* venv, select Python's interpreter as the path of `/path/to/working/directory/AdFlush/adflushvenv/bin/python`, then select the kernel as *adflush*. 
 <hr>
 
 ## 3. Modeling AdFlush
