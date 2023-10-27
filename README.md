@@ -15,11 +15,16 @@ The demo of exploring real-life web sites and detecting, blocking advertisements
 
 <hr>
 
-## Within Python or Conda
+# Within Python Environment
 
-### Prerequisites
-This study has been run and tested in *Python==3.10.11*, *Conda==22.9.0*, and *openjdk==11.0.17*, within Linux 4.15.0-197-generic (bionic 18.04). 
-#### Clone Repository
+## Prerequisites
+This study has been run and tested in *Python==3.10.11*, in both following environments:
+- *javac=17.0.7*, *Windows 10 Pro 22H2*
+- *openjdk==11.0.17*, *Linux 4.15.0-197-generic (bionic 18.04)*
+
+H2O requires 64-bit JDK of versions over 7. 
+
+### 1.  Clone Repository
 Setup the directory structure as it is the same as this GitHub repository.  
 1. We recommend you to use <a href="https://github.com/fedebotu/clone-anonymous-github">Clone Anonymous Github</a> to clone this anonymous repository in ease.  
 
@@ -32,31 +37,39 @@ cd path/to/working/directory
 ```bash
 git clone https://github.com/fedebotu/clone-anonymous-github.git
 python3 clone-anonymous-github/src/download.py --url https://anonymous.4open.science/r/AdFlush-4EF0 --save_dir AdFlush
-cd AdFlush/AdFlush-4EF0
+cd AdFlush
 ``` 
 
-
-#### Python
+### 2. Python Venv
 To run the source codes in python environment run the following code. 
 ```bash
-pip3 install virtualenv
-virtualenv adflush --python=python3.10
+mkdir adflushvenv
+cd adflushvenv
+python3 -m venv adflush
 source adflush/bin/activate
+cd ../AdFlush-4EF0
 pip3 install -r requirements.txt
 ```
 
-#### Conda
-To run the source codes in conda environment run the following code.
+### 3. Prepare Dataset
+Download the following .csv files to *./dataset* folder from <a href="https://zenodo.org/records/10039834">here</a> to replace the *.placeholder* files. 
 ```bash
-conda env create -f environment.yml 
-conda activate adflush
+AdFlush_test.csv
+AdFlush_train.csv
+all_df_883_test.csv
+all_df_883_train.csv
 ```
+We publically open additional datasets not required in the following source codes but involved with or resulting from our study in *Dataset.tar.gz*. 
+
+<hr>
+
+## Feature Enginnering Framework of AdFlush
+
+
 
 #### H2O AutoML
 In order to utilize our *AdFlush* mojo model, the system must have Java installed and running among versions 8, 9, 10, 11, 12, or 13. You can download Java as the same version as tested from <a href="https://www.oracle.com/kr/java/technologies/javase/javase8u211-later-archive-downloads.html">here</a>. 
 
-#### Prepare Dataset
-Download the .csv file to *./dataset* folder from <a href="https://zenodo.org/records/10039834">here</a>.
 
 <hr>
 
