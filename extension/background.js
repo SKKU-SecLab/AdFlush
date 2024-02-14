@@ -1,13 +1,20 @@
 const { getDomain } = require('tldjs');
-const {parse}=require('meriyah');
+// const {parse}=require('meriyah');
+const {parse} = require('acorn-loose')
 
 let start_rule_num=10;
+let top_level_domain='';
 let dynamic_rule_num=start_rule_num;
 let blocked_url_numbers=0;
 let messageQueue = [];
-let time_dict={};
-let ext_time=[];
-let inf_time=[];
+// let time_dict={};
+// let ext_time=[];
+// let inf_time=[];
+let tdnlog=[];
+let urllog=[];
+let typelog=[];
+let predlog=[];
+// let predandfeat=[];
 let toggle=true;
 
 function treewalk(node){
@@ -16,8 +23,6 @@ function treewalk(node){
     const stack = [node];
     let idflen=0;
     let idfcnt=0;
-    let dotinstring=0;
-    let bracketinstring=0;
   
     while (stack.length > 0) {
       const current = stack.pop();
@@ -40,14 +45,10 @@ function treewalk(node){
             idfcnt=idfcnt+1;
           }
         }
-        if ('value' in current){
-          let val=current['value'];
-          dotinstring+=val.split('.').length-1;
-          bracketinstring+=val.split(/\[|\]|\(|\)/).length-1;
-        }
       }
     }
-    resolve({'ast':ret.reverse(),'avg_ident':idflen/idfcnt, 'dot':dotinstring,'bracket':bracketinstring});
+    // console.log(idfcnt/idflen);
+    resolve({'ast':ret.reverse(),'avg_ident':idfcnt/idflen});
   });
 }
 
@@ -132,36 +133,46 @@ async function processNextMessage() {
     const message = messageQueue[0];
     let payload=message['payload'];
     let url=message['url'];
+    let tld=message['tld'];
+    let ct=message['type'];
 
     let pred;
-    await chrome.runtime.sendMessage({action: 'inference', input:payload},async function(response) {
-      try{
-        pred=response['data'];
-
-        let times=time_dict[url];
-        if(times&&times.length==2){
-          try{
-            let now=Date.now();
-            let e_time=times[1]-times[0];
-            let i_time=now-times[1];
-            if(isNaN(e_time)){
-              e_time=0;
-            }
-            if(isNaN(i_time)){
-              i_time=0;
-            }
-            ext_time.push(e_time);
-            inf_time.push(i_time);
-            delete time_dict[url];
-            // console.log("Extract:",e_time,"Inference:",i_time);
-          }catch(e){
-            // console.log(e);
-          }
-        }
-      }catch(e){
-        console.log(e);
-      }
-      if(Number(pred[0])==1){
+    await chrome.runtime.sendMessage({action: 'inference', input:payload},function(response) {
+      // console.log(response);
+      pred=response['data'][0];
+      // console.log(pred, url, payload);
+        // let times=time_dict[url];
+        // if(times&&times.length==2){
+        //   try{
+        //     let now=Date.now();
+        //     let e_time=times[1]-times[0];
+        //     let i_time=now-times[1];
+        //     if(isNaN(e_time)){
+        //       e_time=0;
+        //     }
+        //     if(isNaN(i_time)){
+        //       i_time=0;
+        //     }
+        //     ext_time.push(e_time);
+        //     inf_time.push(i_time);
+        //     delete time_dict[url];
+        //     // console.log("Extract:",e_time,"Inference:",i_time);
+        //   }catch(e){
+        //     // console.log(e);
+        //   }
+        // }
+      // predandfeat.push({"pred":pred, "url":url,"feat":payload});
+      // console.log(predandfeat);
+      tdnlog.push(tld);
+      urllog.push(url);
+      typelog.push(ct);
+      predlog.push(pred);  
+      // if(ct=='xmlhttprequest'){
+      //   console.log(pred, url);
+      // }
+      // console.log(pred, url);
+      if(pred=='True'){
+        
         blocked_url_numbers+=1;
         dynamic_rule_num=dynamic_rule_num%5000;
         if(dynamic_rule_num==0){
@@ -169,7 +180,15 @@ async function processNextMessage() {
         }
         addDynamicRule("block",dynamic_rule_num, url);        
         dynamic_rule_num+=1;
-        console.log("Pred: ", Number(pred[0]), "Added Rule ",dynamic_rule_num-1, "for url ", url);
+        console.log("Pred: ", pred, "Added Rule ",dynamic_rule_num-1, "for url ", url);
+      }
+      else{
+        dynamic_rule_num=dynamic_rule_num%5000;
+        if(dynamic_rule_num==0){
+          dynamic_rule_num=start_rule_num;
+        }
+        addDynamicRule("allow",dynamic_rule_num, url);  
+        dynamic_rule_num+=1;
       }
     });
     await messageQueue.shift();
@@ -177,8 +196,8 @@ async function processNextMessage() {
   }
 }
 
-function addToQueue(url, payload) {
-  messageQueue.push({'url':url, 'payload':payload});
+function addToQueue(url, payload, tld, content_type) {
+  messageQueue.push({'url':url, 'payload':payload, 'tld':tld,'type':content_type});
   if (messageQueue.length == 1) {
     processNextMessage();
   }
@@ -196,9 +215,9 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       if(localurl.match(singleslashreg)){
         localurl=localurl.slice(0,6)+'/'+localurl.slice(6);
       }
-      let temparray=[];
-      temparray.push(Date.now());
-      time_dict[localurl]=temparray;
+      // let temparray=[];
+      // temparray.push(Date.now());
+      // time_dict[localurl]=temparray;
       if('initiator' in details){
         let features=await featureExtract(localurl, details);
 
@@ -231,10 +250,12 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
           dataA.push(features['ng_15_15_15']);
           dataA.push(features['avg_ident']);
           dataA.push(features['avg_charperline']);
-          if(localurl in time_dict){
-            time_dict[localurl].push(Date.now());
-            addToQueue(localurl, dataA);  
-          }
+          // if(localurl in time_dict){
+          //   time_dict[localurl].push(Date.now());
+          //   addToQueue(localurl, dataA);  
+          // }
+          addToQueue(localurl, dataA, top_level_domain, details['type']);  //url, payload, tld, content_type
+          // console.log(localurl, dataA);
         }catch(e){
           console.log(e);
         }
@@ -251,6 +272,9 @@ function featureExtract(url, requestHeader){
     let returnFeatures={};
 
     let src_dom=requestHeader['initiator'];
+    if(top_level_domain==''){
+      top_level_domain=getDomain(src_dom);
+    }
     let urlsplit=url.split('/');
     let domain=""
     if(urlsplit.length>1){
@@ -260,7 +284,6 @@ function featureExtract(url, requestHeader){
     }
     return new Promise((resolve, reject) => {
       (async()=>{
-        try {
           const [fqdnVector, reqVector] = await Promise.all([
             new Promise((innerResolve) => {
               chrome.storage.local.get('fqdnvec', (storage) => {
@@ -278,15 +301,16 @@ function featureExtract(url, requestHeader){
           returnFeatures['url_length']=url.length;
           let fqdn=getDomain(domain);
           returnFeatures['is_third_party']=1;
-          if(fqdn==domain){
+          if(fqdn==top_level_domain){
             returnFeatures['is_third_party']=0;
           }
+          console.log(returnFeatures['is_third_party'], "tld:", top_level_domain, "srcdom:", getDomain(src_dom),"fqdn:",fqdn, "url:", url);
           returnFeatures['fqdnEmbedding']=Array(30).fill(0);
           returnFeatures['reqEmbedding']=Array(200).fill(0);
           //source embedding
           const vec_length = 30;
           try{
-            const url2list = src_dom.split('');
+            const url2list = top_level_domain.split('');
             const embedding = url2list.reduce(async (sum, char) => {
               const vec = fqdnVector[char];
               if (vec) {
@@ -299,6 +323,7 @@ function featureExtract(url, requestHeader){
           }catch(e){
             console.log(e);
           }
+          // console.log(domain, returnFeatures['fqdnEmbedding']);
           //request embedding
           const req_length = 200;
           const url2list2 = url.split('');
@@ -364,9 +389,10 @@ function featureExtract(url, requestHeader){
           //JavaScript features
           //if js
           let requestreg=/https?:\/\//g;
-          let set_storage_reg=/(Storage\.setItem)|(Storage\[[^]]+\] *=)|(Storage\.[^=;\n]+(?!;\n)=)|(Storage *=)/g;
-          let get_storage_reg=/(Storage\.get)|(Storage\[[^]]+\](?!=)*(?=\n|;))|(Storage\.[\w]+(?!=)(?=;|\n))|(Storage(?!=)(?=;|\s))/g;
-          let get_cookie_reg=/(cookies?\.get)|(cookies?\[[^]]+\](?!=)*(?=\n|;))|(cookies?\.[\w]+(?!=)(?=;|\n))|(cookies?(?!=)(?=;|\s))/g;
+          let set_storage_reg=/([sS]torage\.setItem)|([sS]torage\[[^\]]+\][^;\n]*=)|([sS]torage\.[^=;\n]+=)|([sS]torage[^;\n]*=)/g;
+          let get_storage_reg=/([sS]torage\.get)|([sS]torage\[[^\]]+\][^;\n=]*)|([sS]torage\.\w+[^;\n=]*)|([sS]torage[^;\n=]*)/g;
+          let get_cookie_reg=/([cC]ookies?\.get)|([cC]ookies?\[[^\]]+\][^;\n=]*)|([cC]ookies?\.\w+[^;\n=]*)|([cC]ookies?[^=;\n]*)/g;
+          let cleaner_reg=/(?<!\/)"[^"]*\.?[^"]*"|'[^']*\.?[^']*'/gm;
 
           returnFeatures['num_requests_sent']=0;
           returnFeatures['num_set_storage']=0;
@@ -380,44 +406,167 @@ function featureExtract(url, requestHeader){
           returnFeatures['ng_15_0_3']=0;
           returnFeatures['ng_15_0_15']=0; 
           returnFeatures['ng_15_15_15']=0;
-          
-          if (string_content_type === 'script') {
-            const js = await getRAWREQ(url,method,content_header);
-            if(js!=""){
-              let nodots=0;
-              let nobrackets=0;
-              try{
-                let comments=[];
-                const ast=parse(js,{onComment:comments});
-                const traversal=await treewalk(ast);
-                if('ast' in traversal){
-                  nodots+=traversal['dot'];
-                  nobrackets+=traversal['bracket'];
-                  for(let comm=0;comm<comments.length;comm++){
-                    nodots+=comments[comm]['value'].split('.').length-1;
-                    nobrackets+=comments[comm]['value'].split(/\[||\]||\(\\\)/).length-1;
-                  }
-                  const gramsource=traversal['ast'];
-                  let ngram={};
-                  let ngramsum=0;
-                  if(gramsource.length>2){
-                    ngramsum=gramsource.length-2;
-                    for(let i=2;i<gramsource.length;i++){
-                      let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
-                      if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
-                        if(pattern in ngram){
-                          ngram[pattern]=ngram[pattern]+1;
+          try{
+            if (string_content_type == 'script') {
+              // console.log(string_content_type,url);
+              const js = await getRAWREQ(url,method,content_header);
+              // console.log(string_content_type, url, js);
+              if(js!=""){
+                try{
+                  const ast=parse(js,{ecmaVersion: 2022});
+                  // console.log(ast);
+                  const traversal=await treewalk(ast);
+                  
+                  // console.log(traversal['ast'], js);
+                  if('ast' in traversal){
+                    const gramsource=traversal['ast'];
+                    let ngram={};
+                    let ngramsum=0;
+                    if(gramsource.length>2){
+                      ngramsum=gramsource.length-2;
+                      for(let i=2;i<gramsource.length;i++){
+                        let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
+                        if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
+                          if(pattern in ngram){
+                            ngram[pattern]=ngram[pattern]+1;
+                          }
+                          else{
+                            ngram[pattern]=1;
+                          }  
                         }
-                        else{
-                          ngram[pattern]=1;
-                        }  
-                      }
-                    }  
+                      }  
+                    }
+                    for(let i in ngram){
+                      ngram[i]=ngram[i]/ngramsum;
+                    } 
+    
+                    if('0_0_2' in ngram){
+                      returnFeatures['ng_0_0_2']=ngram['0_0_2'];
+                    }
+                    if('0_15_15' in ngram){
+                      returnFeatures['ng_0_15_15']=ngram['0_15_15'];
+                    }
+                    if('2_13_2' in ngram){
+                      returnFeatures['ng_2_13_2']=ngram['2_13_2'];
+                    }
+                    if('15_0_3' in ngram){
+                      returnFeatures['ng_15_0_3']=ngram['15_0_3'];
+                    }
+                    if('15_0_15' in ngram){
+                      returnFeatures['ng_15_0_15']=ngram['15_0_15'];
+                    }
+                    if('15_15_15' in ngram){
+                      returnFeatures['ng_15_15_15']=ngram['15_15_15'];
+                    }
+    
+                    returnFeatures['avg_ident']=traversal['avg_ident'];
+                    // console.log("Parse good", returnFeatures);
+                  }  
+                }
+                catch(exception){
+                  // console.log(exception);
+                }
+                let cleanjs=String(js).replace(cleaner_reg,"");
+
+                let brackets=cleanjs.split(/\[|\]|\(|\)/).length -1;
+                let dots=cleanjs.split(/\./).length-1;
+                if(dots>0 && brackets >0){
+                  returnFeatures['brackettodot']=brackets/dots;
+                }
+                returnFeatures['num_requests_sent']=[...js.matchAll(requestreg)].length;
+                returnFeatures['num_set_storage']=[...cleanjs.matchAll(set_storage_reg)].length;
+                returnFeatures['num_get_storage']=[...cleanjs.matchAll(get_storage_reg)].length;
+                returnFeatures['num_get_cookie']=[...cleanjs.matchAll(get_cookie_reg)].length;
+                let lines=js.split('\n').length;
+                if(lines>0){
+                  returnFeatures['avg_charperline']=js.length/lines;
+                }
+              }
+  
+              //if html
+            }else if(string_content_type=='sub_frame'){
+              // console.log("SUBFRAME", url);
+              let xhr=await getRAWREQ(url,method,content_header);
+              
+              // console.log(string_content_type, url, xhr);
+              if(xhr!=""){
+                let script_reg=/<script\b[^>]*>(.*?)<\/script>/gs;
+                let script_blocks=[...xhr.matchAll(script_reg)];
+                let match_count=0
+                let str_match_count=0;
+                let get_match_count=0;
+                let get_cookie_count=0;
+                let ngram={};
+                let ngramsum=0;
+                let avg_identlen=0;
+                let brackettodot=0;
+                let charperline=0;
+  
+                if(script_blocks){
+                  for(let script_block of script_blocks){
+                    let script=script_block[1];
+
+                    try{
+                      const ast=parse(script,{ecmaVersion:2022});
+                      const traversal=await treewalk(ast);
+                      if('ast' in traversal){
+                        const gramsource=traversal['ast'];
+                        if(gramsource.length>2){
+                          for(let i=2;i<gramsource.length;i++){
+                            let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
+                            if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
+                              ngramsum=ngramsum+1;
+                              if(pattern in ngram){
+                                ngram[pattern]=ngram[pattern]+1;
+                              }
+                              else{
+                                ngram[pattern]=1;
+                              }  
+                            }
+                          }  
+                        }
+                        let identlen=traversal['avg_ident'];
+                        if(identlen>avg_identlen){
+                          avg_identlen=identlen;
+                        }
+                      }  
+                    }
+                    catch(exception){
+                      // console.log(exception);
+                    }
+                    let cleanjs=String(script).replace(cleaner_reg,"");
+
+                    let btod=0;
+                    let brackets=cleanjs.split(/\[|\]|\(|\)/).length -1;
+                    let dots=cleanjs.split('.').length-1;
+                    if(dots>0 && brackets >0){
+                      btod=brackets/dots;
+                    }
+                    if(btod>brackettodot){
+                      brackettodot=btod;
+                    }
+                    let lines=script.split('\n').length;
+                    let cperl=0;
+                    if(lines>0){
+                      cperl=script.length/lines;
+                    }
+                    if(cperl>charperline){
+                      charperline=cperl;
+                    }
+    
+                    let ms=[...script.matchAll(requestreg)];
+                    match_count+=ms.length;
+                    let ms2=[...cleanjs.matchAll(set_storage_reg)];
+                    str_match_count+=ms2.length;
+                    let ms3=[...cleanjs.matchAll(get_storage_reg)];
+                    get_match_count+=ms3.length;
+                    let ms4=[...cleanjs.matchAll(get_cookie_reg)];
+                    get_cookie_count+=ms4.length;
                   }
                   for(let i in ngram){
                     ngram[i]=ngram[i]/ngramsum;
                   } 
-  
+    
                   if('0_0_2' in ngram){
                     returnFeatures['ng_0_0_2']=ngram['0_0_2'];
                   }
@@ -436,141 +585,23 @@ function featureExtract(url, requestHeader){
                   if('15_15_15' in ngram){
                     returnFeatures['ng_15_15_15']=ngram['15_15_15'];
                   }
-  
-                  returnFeatures['avg_ident']=traversal['avg_ident'];
+    
+                  returnFeatures['num_requests_sent']=match_count;
+                  returnFeatures['num_set_storage']=str_match_count;
+                  returnFeatures['num_get_storage']=get_match_count;
+                  returnFeatures['num_get_cookie']=get_cookie_count;
+                  returnFeatures['avg_ident']=avg_identlen;
+                  returnFeatures['brackettodot']=brackettodot;
+                  returnFeatures['avg_charperline']=charperline;
+                  // console.log("Parse good", returnFeatures);
                 }  
               }
-              catch(exception){}
-              let brackets=js.split(/\[|\]|\(|\)/).length -1-nobrackets;
-              let dots=js.split('.').length-1-nodots;
-              if(dots>0 && brackets >0){
-                returnFeatures['brackettodot']=brackets/dots;
-              }
-              returnFeatures['num_requests_sent']=[...js.matchAll(requestreg)].length;
-              returnFeatures['num_set_storage']=[...js.matchAll(set_storage_reg)].length;
-              returnFeatures['num_get_storage']=[...js.matchAll(get_storage_reg)].length;
-              returnFeatures['num_get_cookie']=[...js.matchAll(get_cookie_reg)].length;
-              let lines=js.split('\n').length;
-              if(lines>0){
-                returnFeatures['avg_charperline']=js.length/lines;
-              }
+  
             }
-
-            //if html
-          }else if(string_content_type=='xmlhttprequest'||string_content_type=='sub_frame'){
-            let xhr=await getRAWREQ(url,method,content_header);
-            if(xhr!=""){
-              let script_reg=/<script\b[^>]*>(.*?)<\/script>/gs;
-              let script_blocks=[...xhr.matchAll(script_reg)];
-              let match_count=0
-              let str_match_count=0;
-              let get_match_count=0;
-              let get_cookie_count=0;
-              let ngram={};
-              let ngramsum=0;
-              let avg_identlen=0;
-              let brackettodot=0;
-              let charperline=0;
-
-              if(script_blocks){
-                for(let script_block of script_blocks){
-                  let script=script_block[1];
-                  
-                  let nodots=0;
-                  let nobrackets=0;
-                  try{
-                    const ast=parse(script);
-                    const traversal=await treewalk(ast);
-                    if('ast' in traversal){
-                      const gramsource=traversal['ast'];
-                      if(gramsource.length>2){
-                        for(let i=2;i<gramsource.length;i++){
-                          let pattern=String(ngramdict[gramsource[i-2]])+'_'+String(ngramdict[gramsource[i-1]]+'_'+String(ngramdict[gramsource[i]]))
-                          if(pattern=='0_0_2'||pattern=='0_15_15'||pattern=='2_13_2'||pattern=='15_0_3'||pattern=='15_0_15'||pattern=='15_15_15'){
-                            ngramsum=ngramsum+1;
-                            if(pattern in ngram){
-                              ngram[pattern]=ngram[pattern]+1;
-                            }
-                            else{
-                              ngram[pattern]=1;
-                            }  
-                          }
-                        }  
-                      }
-                      nodots+=traversal['dot'];
-                      nobrackets+=traversal['bracket'];
-                      let identlen=traversal['avg_ident'];
-                      if(identlen>avg_identlen){
-                        avg_identlen=identlen;
-                      }
-                    }  
-                  }
-                  catch(exception){}
-                  let btod=0;
-                  let brackets=script.split(/\[|\]|\(|\)/).length -1-nobrackets;
-                  let dots=script.split('.').length-1-nodots;
-                  if(dots>0 && brackets >0){
-                    btod=brackets/dots;
-                  }
-                  if(btod>brackettodot){
-                    brackettodot=btod;
-                  }
-                  let lines=script.split('\n').length;
-                  let cperl=0;
-                  if(lines>0){
-                    cperl=script.length/lines;
-                  }
-                  if(cperl>charperline){
-                    charperline=cperl;
-                  }
-  
-                  let ms=[...script.matchAll(requestreg)];
-                  match_count+=ms.length;
-                  let ms2=[...script.matchAll(set_storage_reg)];
-                  str_match_count+=ms2.length;
-                  let ms3=[...script.matchAll(get_storage_reg)];
-                  get_match_count+=ms3.length;
-                  let ms4=[...script.matchAll(get_cookie_reg)];
-                  get_cookie_count+=ms4.length;
-                }
-                for(let i in ngram){
-                  ngram[i]=ngram[i]/ngramsum;
-                } 
-  
-                if('0_0_2' in ngram){
-                  returnFeatures['ng_0_0_2']=ngram['0_0_2'];
-                }
-                if('0_15_15' in ngram){
-                  returnFeatures['ng_0_15_15']=ngram['0_15_15'];
-                }
-                if('2_13_2' in ngram){
-                  returnFeatures['ng_2_13_2']=ngram['2_13_2'];
-                }
-                if('15_0_3' in ngram){
-                  returnFeatures['ng_15_0_3']=ngram['15_0_3'];
-                }
-                if('15_0_15' in ngram){
-                  returnFeatures['ng_15_0_15']=ngram['15_0_15'];
-                }
-                if('15_15_15' in ngram){
-                  returnFeatures['ng_15_15_15']=ngram['15_15_15'];
-                }
-  
-                returnFeatures['num_requests_sent']=match_count;
-                returnFeatures['num_set_storage']=str_match_count;
-                returnFeatures['num_get_storage']=get_match_count;
-                returnFeatures['num_get_cookie']=get_cookie_count;
-                returnFeatures['avg_ident']=avg_identlen;
-                returnFeatures['brackettodot']=brackettodot;
-                returnFeatures['avg_charperline']=charperline;
-              }  
-            }
+          } catch (error) {
+            resolve(returnFeatures);
           }
           resolve(returnFeatures);
-        } catch (error) {
-          reject(error);
-        }
-
       })();
     });
 }
@@ -601,7 +632,11 @@ function getRAWREQ(url, meth, header) {
         headers:send_header
       }); 
     }
-
+    // response= await fetch(my_request)
+    // if(response.ok){
+    //   data=await response.text().toString();
+    //   return data;
+    // }
     return new Promise((resolve) => {
       fetch(my_request)
         .then(response => {
@@ -610,13 +645,18 @@ function getRAWREQ(url, meth, header) {
               throw new Error(response.statusText);
             }
             else{
-              return response.text();
+              return response.text()
             }
           }catch(e){
+            console.log(e);
             return "";
           }
         })
+        .then(text=>{
+          return text.toString();
+        })
         .then(data => {
+          // console.log(data);
           resolve(data);
         })
         .catch(()=>{
@@ -650,29 +690,55 @@ chrome.runtime.onInstalled.addListener(async()=>{
   chrome.webNavigation.onBeforeNavigate.addListener(function(details){
     chrome.tabs.query({currentWindow:true, active: true},function(){
       if(details.frameId==0){
+        
         blocked_url_numbers=0;
         console.log("Set block count to 0");
+        console.log("Start");
+        top_level_domain='';
+        tdnlog=[];
+        urllog=[];
+        typelog=[];
+        predlog=[];
       }  
     });
   });
 
+  // chrome.tabs.onUpdated.addListener(
+  //   function(tabId, changeInfo, tab){
+  //       if(changeInfo.status=="complete"&&tab.active&&pagestart>0){
+  //           loadtime=Date.now()-pagestart;
+  //           pagestart=0;
+  //           console.log("Complete",loadtime);
+  //       }
+  //   }
+  // );
+
+
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse){
+    console.log(request);
     if (request.action == "madeModel") {
       console.log("Loaded model: ",request.input);
     }
-    if (request.action == "showBlocks") {
-      sendResponse({"block":blocked_url_numbers,"ext":ext_time,"inf":inf_time});
-      ext_time=[];
-      inf_time=[];
-    } 
-    if(request.action=='time'){
-      sendResponse({"ext":ext_time,"inf":inf_time});
-      ext_time=[];
-      inf_time=[];
-    }
+    // if (request.action == "showBlocks") {
+    //   await sendResponse({"block":blocked_url_numbers,"ext":ext_time,"inf":inf_time});
+    //   ext_time=[];
+    //   inf_time=[];
+    // } 
+    if(request.action=='timelog'){
+      
+      // await sendResponse({"val":predandfeat});
+      // predandfeat=[];
+      // console.log(tdnlog,urllog,typelog,predlog);
+      await sendResponse({"tdn":tdnlog, "url":urllog,"type":typelog,"pred":predlog});
+      tdnlog=[];
+      urllog=[];
+      typelog=[];
+      predlog=[];
+      flushDynamicRules();
+      }
   });
 
-  flushDynamicRules();
+  // flushDynamicRules();
 
   chrome.storage.sync.get({"toggle":true},function(res){
     toggle=res.toggle;
@@ -761,6 +827,13 @@ function addDynamicRule(option, ruleID, urlFilter){
     }
   );
 }
+
+// chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((response)=> {
+  
+//   if(response.rule.rulesetId=='_dynamic'){
+//     console.log("Blocked with ",response.rule.ruleId, response.request.url)
+//   }
+// });
 
 function flushDynamicRules(){
   chrome.declarativeNetRequest.getDynamicRules({},function(rules){

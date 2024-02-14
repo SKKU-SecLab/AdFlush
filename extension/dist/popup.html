@@ -11,9 +11,6 @@
         background-color: rgb(0, 0, 54);
         align-items: center;
         justify-content: center;
-        -webkit-user-select: none;
-        -ms-user-select:none;
-        user-select: none;
       }
 
       .switch {
@@ -98,10 +95,11 @@
     <p style="font-size:medium" id="extract">Avg. extraction time:</p>
     <p style="font-size:medium" id="inference">Avg. inference time:</p>
     <p style="font-size:medium">Click anywhere refresh</p>
-    <div id="reslist">
+
+    <div id="trigger">T</div>
+    <div id="reslist" style="font-size:4px;">
 
     </div>
-    <div id="trigger"></div>
     <script src="popup.js"></script>    
   </body>
 </html>

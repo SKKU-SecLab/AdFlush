@@ -1,10 +1,15 @@
-document.addEventListener("DOMContentLoaded", ()=>{
+// document.addEventListener("DOMContentLoaded", ()=>{
+  let ort;
+  let session;
   (async()=>{
-    const ort=require('onnxruntime-web');
-    let session;
-    
-    session = await ort.InferenceSession.create('./AdFlush.onnx');
-    chrome.runtime.sendMessage({action:'madeModel', input:session.inputNames});
+    try{
+      ort=require('onnxruntime-web');
+      session = await ort.InferenceSession.create('./AdFlush_1211.onnx');
+      chrome.runtime.sendMessage({action:'madeModel', input:session.inputNames});  
+    }
+    catch(e){
+      chrome.runtime.sendMessage({action:'madeModel', input:"Model Import Error"});
+    }
   
     chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse){
       if(request.action=="inference"){
@@ -18,11 +23,11 @@ document.addEventListener("DOMContentLoaded", ()=>{
           const dataC = results.label.data;
           sendResponse({'data':dataC, 'prob':results.probabilities.data});
         }catch (e) {
-          sendResponse(String(e));
+          sendResponse({'error':String(e)});
         }
       }
     });
   })();
-});
+// });
 
   
