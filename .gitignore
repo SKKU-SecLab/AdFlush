@@ -8,3 +8,5 @@ extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 .git
 .github/workflows
 .vscode
+dataset/all_df_883_train.csv
+source/node_modules

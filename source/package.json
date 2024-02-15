@@ -1,7 +1,6 @@
 {
   "name": "source",
   "version": "1.0.0",
-  "description": "",
   "main": "ast_parser.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,7 +8,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "acorn-loose": "^8.4.0",
     "fs": "^0.0.1-security",
     "meriyah": "^4.3.7"
-  }
+  },
+  "description": ""
 }

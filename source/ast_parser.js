@@ -1,17 +1,9 @@
-const {parse}=require('meriyah')
+const {parse}=require('acorn-loose')
 const fs=require('fs')
 
 function parseAST(js){
-    let comment=[];
-    ast=parse(js
-        , {
-        onComment: comment,
-        // raw:true,
-        // globalReturn: true,
-        // lexical:true,
-        // identifierPattern:true
-    });
-    let result={'ast':ast, 'comment':comment}
+    ast=parse(js,{ecmaVersion: 2022} );
+    let result={'ast':ast}
     fs.writeFile(process.argv[3], JSON.stringify(result), (err)=>{
         if(err){
             console.log(err);
