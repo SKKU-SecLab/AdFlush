@@ -1,11 +1,6 @@
 __pycache__/
 extension/node_modules
 extension/dist.crx
-dataset/all_df_883_test.csv
-dataset/all_df_883_train.csv
-dataset/AdFlush_test.csv
-dataset/AdFlush_train.csv
-source/main_test.ipynb
 extension/dist.pem
 extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 .DS_Store
@@ -13,4 +8,3 @@ extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 .git
 .github/workflows
 .vscode
-source/node_modules
