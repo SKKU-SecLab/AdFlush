@@ -28,7 +28,7 @@ import h2o
 from h2o.automl import H2OAutoML
 import matplotlib.pyplot as plt
 from tabgan.sampler import GANGenerator
-import encodings as en
+from adflush_encodings import *
 
 DATADIR=os.path.join(os.getcwd(),os.pardir,"dataset")
 MODELDIR=os.path.join(os.getcwd(),os.pardir,"model")
@@ -37,34 +37,33 @@ OUTDIR=os.path.join(os.getcwd(),os.pardir,"output")
 dataset_dict={
     'trainset':os.path.join(DATADIR, "AdFlush_train.csv"),
     'testset':os.path.join(DATADIR, "AdFlush_test.csv"),
-    # 'gan':os.path.join(DATADIR, "GAN_mutated_AdFlush.csv"),
-    'gan':os.path.join(DATADIR, "adflush_mut_gan_3.csv"),
-    
+    'gan':os.path.join(DATADIR, "GAN_mutated_AdFlush.csv"),
     'gnirts':os.path.join(DATADIR, "JS_obfuscated_gnirts.csv"),
     'javascript-obfuscator':os.path.join(DATADIR, "JS_obfuscated_javascript_obfuscator.csv"),
-    'wobfuscator':os.path.join(DATADIR, "JS_obfuscated_wobfuscator.csv")
+    'wobfuscator':os.path.join(DATADIR, "JS_obfuscated_wobfuscator.csv"),
+    'custom-gan':os.path.join(DATADIR, "custom_GAN_mutated_adflush.csv")
 }
 
 def main(program, argv):
     main_parser=argparse.ArgumentParser(description="Run AdFlush Experiments")
     main_parser.add_argument("-p", type=str, required=True, help="Experiment process you want to run", choices=[
-        'feature-engineering',
-        'model-selection',
-        'performance-evaluation',
-        'longitudinal-evaluation',
+        'feature-eng',
+        'model-sel',
+        'performance-eval',
         'train-gan',
-        'extract-new-features'
+        'extract-new-feat'
     ])        
 
-    main_parser.add_argument("-d", type=str, default="testset", help="Specify dataset during 'performance-evaluation'", choices=[
+    main_parser.add_argument("-d", type=str, default="testset", help="Specify dataset during 'performance-eval'", choices=[
         'testset',
         'gan',
         'gnirts',
         'javascript-obfuscator',
-        'wobfuscator'
+        'wobfuscator',
+        'custom-gan'
     ])
     
-    main_parser.add_argument("-m", type=str, default="mojo", help="Specify model during 'performance-evaluation' *For custom, follow model-selection process first.", choices=[
+    main_parser.add_argument("-m", type=str, default="onnx", help="Specify model during 'performance-eval' *For custom, follow model-sel process first.", choices=[
         'mojo',
         'onnx',
         'custom_mojo',
@@ -79,11 +78,11 @@ def main(program, argv):
 
     main_args=main_parser.parse_args()
     
-    if main_args.p=="feature-engineering":
+    if main_args.p=="feature-eng":
         feature_engineering()
-    elif main_args.p=="model-selection":
+    elif main_args.p=="model-sel":
         model_selection()
-    elif main_args.p=="performance-evaluation":
+    elif main_args.p=="performance-eval":
         if main_args.m.startswith('custom'):
             if main_args.m.endswith('mojo'):
                 if not os.path.isdir(os.path.join(MODELDIR, "AdFlush_custom")):
@@ -93,15 +92,15 @@ def main(program, argv):
                 if not os.path.isfile(os.path.join(MODELDIR, "AdFlush_custom.onnx")):
                     print("No custom onnx file detected.")
                     return
-                
+        if main_args.d=="custom-gan":
+            if not os.path.isfile(os.path.join(DATADIR, "custom_GAN_mutated_adflush.csv")):
+                print("No custom GAN dataset detected.")
+                return
         performance_evaluation(main_args.d, main_args.m)
-    elif main_args.p=="longitudinal-evaluation":
-        longitudinal_evaluation()
     elif main_args.p=='train-gan':
         trainGAN(main_args.s)    
-    elif main_args.p=='extract-new-features':
+    elif main_args.p=='extract-new-feat':
         extractJS()
-
     return
     
 def feature_engineering():
@@ -171,7 +170,7 @@ def feature_engineering():
         n_jobs=-1,
     )
 
-    print("Fitting Selector...")
+    print("Fitting Selector... It takes a couple of hours...")
     selector = selector.fit(X_train, y_train)
 
     rfecv_support = selector.support_
@@ -217,7 +216,7 @@ def feature_engineering():
         n_jobs=-1,
     )
 
-    print("Fitting Selector...")
+    print("Fitting Selector... It takes a couple of hours...")
     selector = selector.fit(X_train, y_train)
 
     rfecv_support = selector.support_
@@ -426,15 +425,15 @@ def metrics(true, pred, _is_mutated, _return):
 def performance_evaluation(dataset_name, model_name):
     dataset_path=dataset_dict[dataset_name]
     print("[[Performance evaluation process of AdFlush using dataset: ",dataset_name, ", model: ",model_name,"]]")
-    
+
     #Prepare datasets
     ISMUTATED=False
     if dataset_name=='testset':
         data_df=pd.read_csv(dataset_path, index_col=0)
-    elif dataset_name=='gan':
+    elif dataset_name=='gan' or dataset_name=='custom-gan':
         data_df=pd.read_csv(dataset_path, index_col=0)
         ISMUTATED=True
-    elif dataset_name=='gnirts' or dataset_name=='javascript_obfuscator' or dataset_name=='wobfuscator':
+    elif dataset_name=='gnirts' or dataset_name=='javascript-obfuscator' or dataset_name=='wobfuscator':
         js_features=['brackettodot', 'num_get_storage', 'num_set_storage',
             'num_get_cookie', 'num_requests_sent', 'ng_0_0_2', 'ng_0_15_15', 'ng_2_13_2',
             'ng_15_0_3', 'ng_15_0_15', 'ng_15_15_15', 'avg_ident',
@@ -493,67 +492,6 @@ def performance_evaluation(dataset_name, model_name):
         metrics(label, pred.tolist(), ISMUTATED, False)
     return
 
-def longitudinal_evaluation():
-    longitude_labels=pd.read_csv(os.path.join(DATADIR,'longitude_label.csv'),index_col=0)
-    
-    long_acc=[]
-    long_pre=[]
-    long_rec=[]
-    long_f1=[]
-    long_fnr=[]
-    long_fpr=[]
-    
-    DATES=[
-        '0406', '0410', '0414', '0418', '0422', '0426', '0430',
-        '0504', '0508', '0512', '0516', '0520', '0524', '0528', '0601', '0605',
-        '0609', '0613', '0617', '0621', '0625', '0629', '0703', '0707', '0711',
-        '0715', '0719', '0723', '0727', '0731', '0804', '0808', '0812', '0816',
-        '0820', '0824', '0828', '0901', '0905', '0909', '0913', '0917'
-    ]
-    
-    h2o.init(nthreads = 12, max_mem_size = "64g", enable_assertions = False, verbose=False)
-    h2o.no_progress()
-    data_df=pd.read_csv(dataset_dict["testset"], index_col=0)
-    model_path=os.path.join(MODELDIR, "AdFlush_mojo.zip")
-    print("Loading model...")
-    h2o_model=h2o.import_mojo(model_path)
-    h2o_test=h2o.H2OFrame(data_df)
-    
-    pred = h2o_model.predict(h2o_test)
-    pred = pred.as_data_frame().predict.to_list()
-    
-    for date in DATES:
-        acc, pre, rec, f1, fnr, fpr=metrics(longitude_labels[date], pred, False, True)
-        long_acc.append(acc)
-        long_pre.append(pre)
-        long_rec.append(rec)
-        long_f1.append(f1)
-        long_fnr.append(fnr)
-        long_fpr.append(fpr)
-        
-    longitude_result=pd.DataFrame()
-    longitude_result['accuracy']=long_acc
-    longitude_result['precision']=long_pre
-    longitude_result['recall']=long_rec
-    longitude_result['f1_score']=long_f1
-    longitude_result['false_negative_rate']=long_fnr
-    longitude_result['false_positive_rate']=long_fpr
-    longitude_result.index=DATES
-    
-    
-    print(longitude_result)
-    print("Max F1 score: ", longitude_result['f1_score'].max(), "Min F1 score: ", longitude_result['f1_score'].min())
-    
-    plt.figure(figsize=(40,30), dpi=100)
-    plt.xticks(rotation=45)
-    lineplot=sns.lineplot(longitude_result[['accuracy','precision','recall','f1_score']])
-    lineplot.set_ylim(0.92,0.985)
-    lineplot.figure.set_size_inches(12,6)
-    
-    plt.legend(loc="lower right")
-    plt.savefig(os.path.join(OUTDIR, "Longitude Result.png"))
-    return
-
 def trainGAN(model):
     with open('features.yaml') as f:
         features = yaml.full_load(f)
@@ -605,7 +543,14 @@ def trainGAN(model):
     mut_train.to_csv(os.path.join(DATADIR, 'custom_GAN_mutated_'+model+'.csv'))
     return
 
+def extractJS():
+    ast_depth, ast_breadth, avg_ident, avg_charperline, brackettodot, num_requests_sent, num_set_storage, num_get_storage, num_get_cookie, ngram= extract_JS_Features(file_name="sample", _isHTML=False)
+    print("\nNew features for processing/sample.js\n\t", "ast_depth: ",ast_depth, "ast_breadth: ",ast_breadth, "avg_ident: ",avg_ident," avg_charperline: ", avg_charperline, "brackettodot: ",brackettodot, "num_requests_sent: ",num_requests_sent, "num_set_storage: ",num_set_storage, "num_get_storage: ",num_get_storage, "num_get_cookie: ",num_get_cookie, "ngram: ",ngram)
 
+    print("\n")
+    
+    ast_depth, ast_breadth, avg_ident, avg_charperline, brackettodot, num_requests_sent, num_set_storage, num_get_storage, num_get_cookie, ngram= extract_JS_Features(file_name="sample", _isHTML=True)
+    print("\nNew features for processing/sample.html\n\t", "ast_depth: ",ast_depth, "ast_breadth: ",ast_breadth, "avg_ident: ",avg_ident," avg_charperline: ", avg_charperline, "brackettodot: ",brackettodot, "num_requests_sent: ",num_requests_sent, "num_set_storage: ",num_set_storage, "num_get_storage: ",num_get_storage, "num_get_cookie: ",num_get_cookie, "ngram: ",ngram)
 
 if __name__=="__main__":    
     if not os.getcwd().endswith("source"):
