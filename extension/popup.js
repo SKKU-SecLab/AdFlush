@@ -19,40 +19,40 @@
   toggle_b.addEventListener("click", function(){
     toggle_click()
   });
-  trigger.addEventListener('click',function(){
-    console.log("Click");
-    // gettimelog();
-    const reslist=document.getElementById('reslist');
-    reslist.innerHTML='';
-    chrome.runtime.sendMessage({action:"timelog"},(response)=>{
-      // let len=response['val'].length;
-      // for(let i=0;i<len;i++){
-      //   let pred=response['val'][i]['pred'];
-      //   let data=response['val'][i]['feat'];
-      //   let url=response['val'][i]['url'];
-      //   const li=document.createElement("li");
-      //   let text=String(pred)+',"'+String(url)+'",'+data.toString()+'\n';
-      //   li.textContent=text;
-      //   reslist.appendChild(li);
-      // }
-      let len=response['tdn'].length;
-      console.log("len", len);
-      if(len>0){
+  // trigger.addEventListener('click',function(){
+  //   console.log("Click");
+  //   // gettimelog();
+  //   const reslist=document.getElementById('reslist');
+  //   reslist.innerHTML='';
+  //   chrome.runtime.sendMessage({action:"timelog"},(response)=>{
+  //     // let len=response['val'].length;
+  //     // for(let i=0;i<len;i++){
+  //     //   let pred=response['val'][i]['pred'];
+  //     //   let data=response['val'][i]['feat'];
+  //     //   let url=response['val'][i]['url'];
+  //     //   const li=document.createElement("li");
+  //     //   let text=String(pred)+',"'+String(url)+'",'+data.toString()+'\n';
+  //     //   li.textContent=text;
+  //     //   reslist.appendChild(li);
+  //     // }
+  //     let len=response['tdn'].length;
+  //     console.log("len", len);
+  //     if(len>0){
 
-          for(let i=0;i<len;i++){
-              let tdn=response['tdn'][i];
-              let url=response['url'][i];
-              let tp=response['type'][i];
-              let pred=response['pred'][i];
-              const li = document.createElement("li");
-              let text=String(tdn)+' '+String(url)+' '+String(tp)+' '+String(pred);
-              li.textContent=text;
-              reslist.appendChild(li);
-          }
-      }
+  //         for(let i=0;i<len;i++){
+  //             let tdn=response['tdn'][i];
+  //             let url=response['url'][i];
+  //             let tp=response['type'][i];
+  //             let pred=response['pred'][i];
+  //             const li = document.createElement("li");
+  //             let text=String(tdn)+' '+String(url)+' '+String(tp)+' '+String(pred);
+  //             li.textContent=text;
+  //             reslist.appendChild(li);
+  //         }
+  //     }
 
-    });
-  });
+  //   });
+  // });
 
   // cal_stat();
 // });

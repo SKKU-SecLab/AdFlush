@@ -7,13 +7,13 @@ let top_level_domain='';
 let dynamic_rule_num=start_rule_num;
 let blocked_url_numbers=0;
 let messageQueue = [];
-// let time_dict={};
-// let ext_time=[];
-// let inf_time=[];
-let tdnlog=[];
-let urllog=[];
-let typelog=[];
-let predlog=[];
+let time_dict={};
+let ext_time=[];
+let inf_time=[];
+// let tdnlog=[];
+// let urllog=[];
+// let typelog=[];
+// let predlog=[];
 // let predandfeat=[];
 let toggle=true;
 
@@ -141,37 +141,37 @@ async function processNextMessage() {
       // console.log(response);
       pred=response['data'][0];
       // console.log(pred, url, payload);
-        // let times=time_dict[url];
-        // if(times&&times.length==2){
-        //   try{
-        //     let now=Date.now();
-        //     let e_time=times[1]-times[0];
-        //     let i_time=now-times[1];
-        //     if(isNaN(e_time)){
-        //       e_time=0;
-        //     }
-        //     if(isNaN(i_time)){
-        //       i_time=0;
-        //     }
-        //     ext_time.push(e_time);
-        //     inf_time.push(i_time);
-        //     delete time_dict[url];
-        //     // console.log("Extract:",e_time,"Inference:",i_time);
-        //   }catch(e){
-        //     // console.log(e);
-        //   }
-        // }
+      let times=time_dict[url];
+      if(times&&times.length==2){
+        try{
+          let now=Date.now();
+          let e_time=times[1]-times[0];
+          let i_time=now-times[1];
+          if(isNaN(e_time)){
+            e_time=0;
+          }
+          if(isNaN(i_time)){
+            i_time=0;
+          }
+          ext_time.push(e_time);
+          inf_time.push(i_time);
+          delete time_dict[url];
+          console.log("Extract time:",e_time,"ms, Inference:",i_time,"ms");
+        }catch(e){
+            // console.log(e);
+        }
+      }
       // predandfeat.push({"pred":pred, "url":url,"feat":payload});
       // console.log(predandfeat);
-      tdnlog.push(tld);
-      urllog.push(url);
-      typelog.push(ct);
-      predlog.push(pred);  
+      // tdnlog.push(tld);
+      // urllog.push(url);
+      // typelog.push(ct);
+      // predlog.push(pred);  
       // if(ct=='xmlhttprequest'){
       //   console.log(pred, url);
       // }
       // console.log(pred, url);
-      if(pred=='True'){
+      if(pred==1){
         
         blocked_url_numbers+=1;
         dynamic_rule_num=dynamic_rule_num%5000;
@@ -215,9 +215,9 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       if(localurl.match(singleslashreg)){
         localurl=localurl.slice(0,6)+'/'+localurl.slice(6);
       }
-      // let temparray=[];
-      // temparray.push(Date.now());
-      // time_dict[localurl]=temparray;
+      let temparray=[];
+      temparray.push(Date.now());
+      time_dict[localurl]=temparray;
       if('initiator' in details){
         let features=await featureExtract(localurl, details);
 
@@ -250,11 +250,11 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
           dataA.push(features['ng_15_15_15']);
           dataA.push(features['avg_ident']);
           dataA.push(features['avg_charperline']);
-          // if(localurl in time_dict){
-          //   time_dict[localurl].push(Date.now());
-          //   addToQueue(localurl, dataA);  
-          // }
-          addToQueue(localurl, dataA, top_level_domain, details['type']);  //url, payload, tld, content_type
+          if(localurl in time_dict){
+            time_dict[localurl].push(Date.now());
+            // addToQueue(localurl, dataA);  
+            addToQueue(localurl, dataA, top_level_domain, details['type']);  //url, payload, tld, content_type
+          }
           // console.log(localurl, dataA);
         }catch(e){
           console.log(e);
@@ -304,7 +304,7 @@ function featureExtract(url, requestHeader){
           if(fqdn==top_level_domain){
             returnFeatures['is_third_party']=0;
           }
-          console.log(returnFeatures['is_third_party'], "tld:", top_level_domain, "srcdom:", getDomain(src_dom),"fqdn:",fqdn, "url:", url);
+          // console.log(returnFeatures['is_third_party'], "tld:", top_level_domain, "srcdom:", getDomain(src_dom),"fqdn:",fqdn, "url:", url);
           returnFeatures['fqdnEmbedding']=Array(30).fill(0);
           returnFeatures['reqEmbedding']=Array(200).fill(0);
           //source embedding
@@ -648,7 +648,7 @@ function getRAWREQ(url, meth, header) {
               return response.text()
             }
           }catch(e){
-            console.log(e);
+            // console.log(e);
             return "";
           }
         })
@@ -687,21 +687,21 @@ chrome.runtime.onInstalled.addListener(async()=>{
   });
   await setupOffscreenDocument('offscreen.html');
 
-  chrome.webNavigation.onBeforeNavigate.addListener(function(details){
-    chrome.tabs.query({currentWindow:true, active: true},function(){
-      if(details.frameId==0){
+  // chrome.webNavigation.onBeforeNavigate.addListener(function(details){
+  //   chrome.tabs.query({currentWindow:true, active: true},function(){
+  //     if(details.frameId==0){
         
-        blocked_url_numbers=0;
-        console.log("Set block count to 0");
-        console.log("Start");
-        top_level_domain='';
-        tdnlog=[];
-        urllog=[];
-        typelog=[];
-        predlog=[];
-      }  
-    });
-  });
+  //       blocked_url_numbers=0;
+  //       console.log("Set block count to 0");
+  //       console.log("Start");
+  //       top_level_domain='';
+  //       tdnlog=[];
+  //       urllog=[];
+  //       typelog=[];
+  //       predlog=[];
+  //     }  
+  //   });
+  // });
 
   // chrome.tabs.onUpdated.addListener(
   //   function(tabId, changeInfo, tab){
@@ -724,18 +724,18 @@ chrome.runtime.onInstalled.addListener(async()=>{
     //   ext_time=[];
     //   inf_time=[];
     // } 
-    if(request.action=='timelog'){
+    // if(request.action=='timelog'){
       
-      // await sendResponse({"val":predandfeat});
-      // predandfeat=[];
-      // console.log(tdnlog,urllog,typelog,predlog);
-      await sendResponse({"tdn":tdnlog, "url":urllog,"type":typelog,"pred":predlog});
-      tdnlog=[];
-      urllog=[];
-      typelog=[];
-      predlog=[];
-      flushDynamicRules();
-      }
+    //   // await sendResponse({"val":predandfeat});
+    //   // predandfeat=[];
+    //   // console.log(tdnlog,urllog,typelog,predlog);
+    //   await sendResponse({"tdn":tdnlog, "url":urllog,"type":typelog,"pred":predlog});
+    //   tdnlog=[];
+    //   urllog=[];
+    //   typelog=[];
+    //   predlog=[];
+    //   flushDynamicRules();
+    //   }
   });
 
   // flushDynamicRules();
@@ -872,7 +872,7 @@ async function setupOffscreenDocument(path) {
     creating = chrome.offscreen.createDocument({
       url: path,
       reasons: ['WORKERS'],
-      justification: 'reason for needing the document',
+      justification: 'Run ONNX model',
     });
     await creating;
     creating = null;

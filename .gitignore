@@ -2,6 +2,7 @@ __pycache__/
 extension/node_modules
 extension/dist.crx
 extension/dist.pem
+extension/dist.zip
 extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 .DS_Store
 .github
@@ -10,3 +11,4 @@ extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 .vscode
 dataset/all_df_883_train.csv
 source/node_modules
+Python-3.7.17.tgz

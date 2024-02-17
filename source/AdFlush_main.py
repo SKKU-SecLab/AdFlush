@@ -28,6 +28,7 @@ import h2o
 from h2o.automl import H2OAutoML
 import matplotlib.pyplot as plt
 from tabgan.sampler import GANGenerator
+import encodings as en
 
 DATADIR=os.path.join(os.getcwd(),os.pardir,"dataset")
 MODELDIR=os.path.join(os.getcwd(),os.pardir,"model")
@@ -51,7 +52,8 @@ def main(program, argv):
         'model-selection',
         'performance-evaluation',
         'longitudinal-evaluation',
-        'train-gan'
+        'train-gan',
+        'extract-new-features'
     ])        
 
     main_parser.add_argument("-d", type=str, default="testset", help="Specify dataset during 'performance-evaluation'", choices=[
@@ -97,6 +99,8 @@ def main(program, argv):
         longitudinal_evaluation()
     elif main_args.p=='train-gan':
         trainGAN(main_args.s)    
+    elif main_args.p=='extract-new-features':
+        extractJS()
 
     return
     
@@ -535,8 +539,9 @@ def longitudinal_evaluation():
     longitude_result['false_negative_rate']=long_fnr
     longitude_result['false_positive_rate']=long_fpr
     longitude_result.index=DATES
-    longitude_result
     
+    
+    print(longitude_result)
     print("Max F1 score: ", longitude_result['f1_score'].max(), "Min F1 score: ", longitude_result['f1_score'].min())
     
     plt.figure(figsize=(40,30), dpi=100)
@@ -598,8 +603,9 @@ def trainGAN(model):
             
     mut_train['label']=mut_target.values
     mut_train.to_csv(os.path.join(DATADIR, 'custom_GAN_mutated_'+model+'.csv'))
-    
     return
+
+
 
 if __name__=="__main__":    
     if not os.getcwd().endswith("source"):

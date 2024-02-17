@@ -4,7 +4,7 @@
   (async()=>{
     try{
       ort=require('onnxruntime-web');
-      session = await ort.InferenceSession.create('./AdFlush_1211.onnx');
+      session = await ort.InferenceSession.create('./AdFlush.onnx');
       chrome.runtime.sendMessage({action:'madeModel', input:session.inputNames});  
     }
     catch(e){
