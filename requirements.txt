@@ -1,4 +1,4 @@
-numpy==1.21.6
+numpy==1.22.2
 pandas
 tqdm
 scikit-learn==1.0.2
@@ -17,4 +17,8 @@ onnxmltools
 onnxconverter-common
 seaborn
 pyyaml
-urllib3==1.26.6
+urllib3==1.26.18
+fonttools>=4.43.0 # not directly required, pinned by Snyk to avoid a vulnerability
+pillow>=10.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
+sympy>=1.12 # not directly required, pinned by Snyk to avoid a vulnerability
+xgboost>=1.7.0 # not directly required, pinned by Snyk to avoid a vulnerability
