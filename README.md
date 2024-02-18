@@ -157,7 +157,7 @@ You can also see the results of RFECV in figures in `/adflush/output`. To fetch 
 $ docker cp adflush_con:/adflush/output /path/to/fetch/figures/
 ```
 
-**RFECV process requires many hours.*
+* ***RFECV process requires many hours, and the entire 'feature-eng' process might run over a day.***
 
 
 ## 2. Modeling AdFlush
