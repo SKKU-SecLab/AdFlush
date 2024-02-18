@@ -33,7 +33,7 @@ $ docker pull chaejinlim98330/adflush:artifact.v1
 ### 2. Start the Docker container
 On first run: 
 ```bash
-$ docker run -it --name adflush_con chaejinlim98330/adflush:artifact.v1
+$ docker run -it --name adflush_con chaejinlim98330/adflush:artifact.v2
 ```
 On post runs:
 ```bash
