@@ -237,7 +237,7 @@ New features for processing/sample.html
 ```
 
 # **2. Within Chrome Extension**
-The following browser extension is developed in `npm==9.5.1`. 
+The following browser extension is developed in `npm==9.5.1`. For those who run *AdFlush* within a Docker image, the extension source code is **not included** in the image thus have to clone this github directory in order to run the Chrome extension. 
 
 ## Setting Up *AdFlush*
 
