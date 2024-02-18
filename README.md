@@ -29,7 +29,7 @@ Run the following codes to pull the Docker image of *AdFlush* and start a contai
 $ apt-get install Docker.io
 $ docker pull chaejinlim98330/adflush:artifact.v1
 ```
-- If you encounter an error saying `Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.`, see <a href="https://stackoverflow.com/questions/44678725/cannot-connect-to-the-docker-daemon-at-unix-var-run-docker-sock-is-the-docker" and run the command corresponding to your OS to start your Docker daemon.
+- If you encounter an error saying `Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.`, see <a href="https://stackoverflow.com/questions/44678725/cannot-connect-to-the-docker-daemon-at-unix-var-run-docker-sock-is-the-docker">here</a> and run the command corresponding to your OS to start your Docker daemon.
 
 ### 2. Start the Docker container
 On first run: 
