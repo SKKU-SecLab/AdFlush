@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/644975161.svg)](https://zenodo.org/doi/10.5281/zenodo.10682482)
+
 # Welcome to *AdFlush*
 
 Document for paper *AdFlush: A Real-World Deployable Machine Learning Solution for Effective Advertisement and Web Tracker Prevention*, accepted to the Web Conference 2024, Singapore. 
