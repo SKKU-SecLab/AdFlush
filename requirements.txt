@@ -1,7 +1,7 @@
 numpy==1.21.6
 pandas
 tqdm
-scikit-learn==1.0.2
+scikit-learn==1.5.0
 scipy==1.7.3
 beautifulsoup4
 gensim
