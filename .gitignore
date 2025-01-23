@@ -13,3 +13,6 @@ extension/.DS_Store
 dataset/all_df_883_train.csv
 source/node_modules
 Python-3.7.17.tgz
+extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
+embedding.ipynb
+
