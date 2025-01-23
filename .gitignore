@@ -15,4 +15,5 @@ source/node_modules
 Python-3.7.17.tgz
 extension/dist/_metadata/generated_indexed_rulesets/_ruleset1
 embedding.ipynb
-
+old_background.js
+AdFlush_old.onnx
