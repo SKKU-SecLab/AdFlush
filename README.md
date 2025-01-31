@@ -260,6 +260,9 @@ The following browser extension is developed in `npm==9.5.1`. For those who run 
 5. Open your extensions and pin *AdFlush* to utilize full functionalities.  
     ![Assets 4](./assets/browser_extension_pre4.png)
 
+6. Toggle on *AdFlush* to start protecting your browser from advertisements and web trackers. 
+    ![Assets 5](./assets/browser_extension_pre5.png)
+
 ## Applying Modification to *AdFlush*
 If you decide to apply some modifications within our chrome extension or want to customize behavior, you must use <a href="https://webpack.js.org/">webpack</a> to repack the extension reflecting your modifications.
 
