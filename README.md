@@ -148,7 +148,7 @@ optional arguments:
                         Specify model during 'train-gan'
 ```
 
-## 1. Feature Enginnering Framework of AdFlush
+## 1. Feature Engineering Framework of AdFlush
 
 Run `python main.py -p feature-eng` to follow the steps and reproduce the results of *AdFlush*'s feature engineering framework. The contents are:
 1. Point-Biserial Correlation
